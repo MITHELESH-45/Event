@@ -1,17 +1,9 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
-import { ThemeProvider } from '@/components/providers/theme-provider'
-import { cn } from '@/lib/utils'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'EventEdge - Institutional Event Management',
-  description: 'Automated event lifecycle management for educational institutions.',
-  icons: {
-    icon: '/favicon.png',
-  },
+  title: 'EventEdge - Event Management Platform',
+  description: 'Create, manage, and track college events with ease. From registration to certificates, EventEdge handles everything.',
 }
 
 export default function RootLayout({
@@ -20,20 +12,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={cn(
-        "min-h-screen bg-background font-sans antialiased text-foreground",
-        inter.className
-      )}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          forcedTheme="dark"
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
-      </body>
+    <html lang="en" className="dark">
+      <body>{children}</body>
     </html>
   )
 }
