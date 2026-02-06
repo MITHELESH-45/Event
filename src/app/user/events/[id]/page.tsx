@@ -1,52 +1,119 @@
 "use client"
 
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Calendar, Clock, MapPin, Users, Award, CheckCircle } from "lucide-react"
-
-// Mock event data for participants
-const mockEvents: Record<string, any> = {
-    "1": {
-        id: "1",
-        title: "AI & Machine Learning Summit 2026",
-        description: "Explore the latest advancements in AI and machine learning with industry experts. This comprehensive summit features keynote speeches, hands-on workshops, and networking opportunities with leading professionals in the field.",
-        date: "2026-02-15",
-        time: "09:00 AM - 06:00 PM",
-        location: "Tech Hub Convention Center",
-        address: "123 Innovation Drive, Tech City, TC 12345",
-        capacity: 500,
-        registered: 342,
-        status: "OPEN",
-        category: "Technology",
-        schedule: [
-            { time: "09:00 AM", title: "Registration & Welcome Coffee" },
-            { time: "10:00 AM", title: "Keynote: The Future of AI" },
-            { time: "11:30 AM", title: "Workshop: Building ML Models" },
-            { time: "01:00 PM", title: "Lunch Break & Networking" },
-            { time: "02:30 PM", title: "Panel: Ethics in AI" },
-            { time: "04:00 PM", title: "Hands-on Lab Sessions" },
-            { time: "05:30 PM", title: "Closing Remarks" }
-        ],
-        certificateEnabled: true
-    }
-}
+import { ArrowLeft, Calendar, Clock, MapPin, Users, Award, CheckCircle, Loader2 } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function UserEventDetailsPage() {
     const params = useParams()
+    const router = useRouter()
+    const { toast } = useToast()
     const eventId = params.id as string
-    const event = mockEvents[eventId] || mockEvents["1"]
+    
+    const [event, setEvent] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
     const [registering, setRegistering] = useState(false)
     const [isRegistered, setIsRegistered] = useState(false)
+    const [error, setError] = useState("")
+
+    useEffect(() => {
+        const fetchEventAndRegistration = async () => {
+            try {
+                // Fetch event details
+                const res = await fetch(`http://localhost:5000/api/events/${eventId}`)
+                if (!res.ok) throw new Error("Failed to fetch event details")
+                const data = await res.json()
+                setEvent(data)
+
+                // Check registration status (if logged in)
+                const token = localStorage.getItem("token")
+                if (token) {
+                    const regRes = await fetch(`http://localhost:5000/api/registrations/my`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    })
+                    if (regRes.ok) {
+                        const myRegistrations = await regRes.json()
+                        const isReg = myRegistrations.some((r: any) => r.event._id === eventId || r.event === eventId)
+                        setIsRegistered(isReg)
+                    }
+                }
+            } catch (err) {
+                console.error(err)
+                setError("Failed to load event details")
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchEventAndRegistration()
+    }, [eventId])
 
     const handleRegister = async () => {
+        const token = localStorage.getItem("token")
+        if (!token) {
+            router.push("/auth/login")
+            return
+        }
+
         setRegistering(true)
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        setIsRegistered(true)
-        setRegistering(false)
+        try {
+            const res = await fetch(`http://localhost:5000/api/registrations`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ eventId })
+            })
+
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(data.message || "Failed to register")
+            }
+
+            setIsRegistered(true)
+            toast({
+                title: "Success",
+                description: "You have successfully registered for this event!",
+            })
+            
+            // Refresh event to update count
+            const eventRes = await fetch(`http://localhost:5000/api/events/${eventId}`)
+            if (eventRes.ok) {
+                const eventData = await eventRes.json()
+                setEvent(eventData)
+            }
+
+        } catch (err: any) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: err.message,
+            })
+        } finally {
+            setRegistering(false)
+        }
+    }
+
+    if (loading) {
+        return <div className="flex justify-center items-center h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>
+    }
+
+    if (error || !event) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
+                <p className="text-destructive text-lg font-medium">{error || "Event not found"}</p>
+                <Button asChild variant="outline">
+                    <Link href="/user/events">Back to Events</Link>
+                </Button>
+            </div>
+        )
     }
 
     return (
@@ -78,29 +145,31 @@ export default function UserEventDetailsPage() {
                             <CardTitle>About This Event</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-muted-foreground">{event.description}</p>
+                            <p className="text-muted-foreground whitespace-pre-line">{event.description}</p>
                         </CardContent>
                     </Card>
 
-                    {/* Schedule */}
-                    <Card className="bg-card/50 border-border/50">
-                        <CardHeader>
-                            <CardTitle>Event Schedule</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {event.schedule.map((item: any, index: number) => (
-                                    <div key={index} className="flex gap-4 items-start">
-                                        <div className="w-24 text-sm font-medium text-primary shrink-0">{item.time}</div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-2 w-2 bg-primary rounded-full" />
-                                            <p>{item.title}</p>
+                    {/* Schedule - Only show if exists (optional future feature) */}
+                    {event.schedule && event.schedule.length > 0 && (
+                        <Card className="bg-card/50 border-border/50">
+                            <CardHeader>
+                                <CardTitle>Event Schedule</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    {event.schedule.map((item: any, index: number) => (
+                                        <div key={index} className="flex gap-4 items-start">
+                                            <div className="w-24 text-sm font-medium text-primary shrink-0">{item.time}</div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-2 w-2 bg-primary rounded-full" />
+                                                <p>{item.title}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
 
                 {/* Sidebar */}
@@ -110,30 +179,30 @@ export default function UserEventDetailsPage() {
                         <CardHeader>
                             <CardTitle>Register Now</CardTitle>
                             <CardDescription>
-                                {event.registered}/{event.capacity} spots filled
+                                {event.registered || 0}/{event.capacity} spots filled
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="w-full bg-secondary rounded-full h-2">
                                 <div
                                     className="bg-primary rounded-full h-2"
-                                    style={{ width: `${(event.registered / event.capacity) * 100}%` }}
+                                    style={{ width: `${Math.min(((event.registered || 0) / event.capacity) * 100, 100)}%` }}
                                 />
                             </div>
                             {isRegistered ? (
                                 <div className="text-center py-4">
-                                    <CheckCircle className="h-12 w-12 text-green-400 mx-auto mb-2" />
-                                    <p className="font-medium text-green-400">You are registered!</p>
+                                    <CheckCircle className="h-12 w-12 text-primary mx-auto mb-2" />
+                                    <p className="font-medium text-primary">You are registered!</p>
                                     <p className="text-sm text-muted-foreground">Check your email for details</p>
                                 </div>
                             ) : (
                                 <Button
                                     className="w-full"
                                     size="lg"
-                                    disabled={registering || event.registered >= event.capacity}
+                                    disabled={registering || (event.registered || 0) >= event.capacity}
                                     onClick={handleRegister}
                                 >
-                                    {registering ? "Registering..." : "Register for Event"}
+                                    {registering ? "Registering..." : (event.registered || 0) >= event.capacity ? "Event Full" : "Register for Event"}
                                 </Button>
                             )}
                         </CardContent>
@@ -149,7 +218,7 @@ export default function UserEventDetailsPage() {
                                 <Calendar className="h-5 w-5 text-primary mt-0.5" />
                                 <div>
                                     <div className="font-medium">Date</div>
-                                    <div className="text-sm text-muted-foreground">{event.date}</div>
+                                    <div className="text-sm text-muted-foreground">{new Date(event.date).toLocaleDateString()}</div>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3">
@@ -163,25 +232,24 @@ export default function UserEventDetailsPage() {
                                 <MapPin className="h-5 w-5 text-primary mt-0.5" />
                                 <div>
                                     <div className="font-medium">{event.location}</div>
-                                    <div className="text-sm text-muted-foreground">{event.address}</div>
+                                    {/* <div className="text-sm text-muted-foreground">{event.address}</div> */}
                                 </div>
                             </div>
                             <div className="flex items-start gap-3">
                                 <Users className="h-5 w-5 text-primary mt-0.5" />
                                 <div>
                                     <div className="font-medium">Capacity</div>
-                                    <div className="text-sm text-muted-foreground">{event.capacity - event.registered} spots remaining</div>
+                                    <div className="text-sm text-muted-foreground">{event.capacity - (event.registered || 0)} spots remaining</div>
                                 </div>
                             </div>
-                            {event.certificateEnabled && (
-                                <div className="flex items-start gap-3">
-                                    <Award className="h-5 w-5 text-primary mt-0.5" />
-                                    <div>
-                                        <div className="font-medium">Certificate</div>
-                                        <div className="text-sm text-muted-foreground">Issued upon attendance</div>
-                                    </div>
+                            {/* Certificate info is optional as it's not in the model yet */}
+                            {/* <div className="flex items-start gap-3">
+                                <Award className="h-5 w-5 text-primary mt-0.5" />
+                                <div>
+                                    <div className="font-medium">Certificate</div>
+                                    <div className="text-sm text-muted-foreground">Issued upon attendance</div>
                                 </div>
-                            )}
+                            </div> */}
                         </CardContent>
                     </Card>
                 </div>

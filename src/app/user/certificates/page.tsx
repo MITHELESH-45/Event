@@ -72,9 +72,9 @@ export default function CertificatesPage() {
                                     <span className="text-muted-foreground">Date:</span>
                                     <span className="font-medium">{cert.date}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
+                                <div className="flex items-center gap-2 mb-2">
                                     <span className="text-muted-foreground">Status:</span>
-                                    <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">Verified</Badge>
+                                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Verified</Badge>
                                 </div>
                                 <Button
                                     className="w-full mt-2"

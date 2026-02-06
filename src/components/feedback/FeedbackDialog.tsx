@@ -42,7 +42,7 @@ export function FeedbackDialog({ eventTitle }: { eventTitle: string }) {
                             {[1, 2, 3, 4, 5].map((star) => (
                                 <Star
                                     key={star}
-                                    className={`h-8 w-8 cursor-pointer transition-colors ${rating >= star ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'}`}
+                                    className={`h-8 w-8 cursor-pointer transition-colors ${rating >= star ? 'fill-primary text-primary' : 'text-muted-foreground'}`}
                                     onClick={() => setRating(star)}
                                 />
                             ))}
@@ -58,7 +58,7 @@ export function FeedbackDialog({ eventTitle }: { eventTitle: string }) {
                         </div>
                     </div>
                 ) : (
-                    <div className="py-8 text-center text-green-500">
+                    <div className="py-8 text-center text-primary">
                         <p className="text-lg font-medium">Thank you for your feedback!</p>
                     </div>
                 )}

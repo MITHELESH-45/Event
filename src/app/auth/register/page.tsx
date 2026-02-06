@@ -8,13 +8,21 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { PublicLayout } from "@/components/layout/PublicLayout"
-import { Loader2 } from "lucide-react"
+import { Loader2, Eye, EyeOff } from "lucide-react"
 
 export default function RegisterPage() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const role = searchParams.get("role")
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+    })
 
     useEffect(() => {
         if (!role) {
@@ -24,16 +32,48 @@ export default function RegisterPage() {
         }
     }, [role, router])
 
-    const handleRegister = (e: React.FormEvent) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData({ ...formData, [e.target.id]: e.target.value })
+    }
+
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault()
+        
+        if (formData.password !== formData.confirmPassword) {
+            alert("Passwords do not match")
+            return
+        }
+
         setLoading(true)
 
-        // Simulate API call
-        setTimeout(() => {
+        try {
+            const res = await fetch('http://localhost:5000/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: formData.name,
+                    email: formData.email,
+                    password: formData.password,
+                    role: role
+                })
+            })
+
+            const data = await res.json()
+
+            if (res.ok) {
+                alert("Registration successful! Please login.")
+                router.push(`/auth/login?role=${role}`)
+            } else {
+                alert(data.message || "Registration failed")
+            }
+        } catch (error) {
+            console.error(error)
+            alert("An error occurred. Please try again.")
+        } finally {
             setLoading(false)
-            // Redirect to login after registration
-            router.push(`/auth/login?role=${role}`)
-        }, 1500)
+        }
     }
 
     if (!role || role === 'admin') return null
@@ -52,19 +92,63 @@ export default function RegisterPage() {
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="name">Full Name</Label>
-                                <Input id="name" placeholder="John Doe" required />
+                                <Input id="name" placeholder="John Doe" required value={formData.name} onChange={handleChange} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
-                                <Input id="email" type="email" placeholder="name@example.com" required />
+                                <Input id="email" type="email" placeholder="name@example.com" required value={formData.email} onChange={handleChange} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="password">Password</Label>
-                                <Input id="password" type="password" required />
+                                <div className="relative">
+                                    <Input 
+                                        id="password" 
+                                        type={showPassword ? "text" : "password"} 
+                                        required 
+                                        value={formData.password} 
+                                        onChange={handleChange} 
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                        ) : (
+                                            <Eye className="h-4 w-4 text-muted-foreground" />
+                                        )}
+                                        <span className="sr-only">Toggle password visibility</span>
+                                    </Button>
+                                </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="confirm-password">Confirm Password</Label>
-                                <Input id="confirm-password" type="password" required />
+                                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                <div className="relative">
+                                    <Input 
+                                        id="confirmPassword" 
+                                        type={showConfirmPassword ? "text" : "password"} 
+                                        required 
+                                        value={formData.confirmPassword} 
+                                        onChange={handleChange} 
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    >
+                                        {showConfirmPassword ? (
+                                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                        ) : (
+                                            <Eye className="h-4 w-4 text-muted-foreground" />
+                                        )}
+                                        <span className="sr-only">Toggle password visibility</span>
+                                    </Button>
+                                </div>
                             </div>
                         </CardContent>
                         <CardFooter className="flex flex-col space-y-4">

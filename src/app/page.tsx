@@ -68,7 +68,7 @@ export default function Home() {
                 Manage Events
               </span>
               <br />
-              <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary via-yellow-500 to-red-500 bg-clip-text text-transparent">
                 Like Never Before
               </span>
             </h1>
@@ -80,7 +80,7 @@ export default function Home() {
 
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/auth/role-selection?mode=register">
-                <Button size="lg" className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 px-8">
+                <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 px-8">
                   Get Started Free
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -96,7 +96,7 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-red-500 bg-clip-text text-transparent">
                   {stat.value}
                 </div>
                 <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
@@ -138,7 +138,7 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-20 border-t">
         <div className="container">
-          <div className="relative rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-blue-500/20 p-8 md:p-16 overflow-hidden">
+          <div className="relative rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-red-500/20 p-8 md:p-16 overflow-hidden">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
 
             <div className="relative text-center max-w-2xl mx-auto">
@@ -150,7 +150,7 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/auth/role-selection?mode=register">
-                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 px-8">
+                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 px-8">
                     Create Your First Event
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>

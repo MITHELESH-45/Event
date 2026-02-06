@@ -86,11 +86,11 @@ export default function MyEventsPage() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case "APPROVED":
-                return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Approved</Badge>
+                return <Badge className="bg-primary/20 text-primary border-primary/30">Approved</Badge>
             case "PENDING":
-                return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Pending</Badge>
+                return <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30">Pending</Badge>
             case "COMPLETED":
-                return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Completed</Badge>
+                return <Badge className="bg-primary/20 text-primary border-primary/30">Completed</Badge>
             case "REJECTED":
                 return <Badge variant="destructive">Rejected</Badge>
             default:
@@ -133,25 +133,25 @@ export default function MyEventsPage() {
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Approved</CardDescription>
-                        <CardTitle className="text-2xl text-green-400">{stats.approved}</CardTitle>
+                        <CardTitle className="text-2xl text-primary">{stats.approved}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Pending</CardDescription>
-                        <CardTitle className="text-2xl text-yellow-400">{stats.pending}</CardTitle>
+                        <CardTitle className="text-2xl text-yellow-500">{stats.pending}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Total Registrations</CardDescription>
-                        <CardTitle className="text-2xl text-blue-400">{stats.totalRegistrations}</CardTitle>
+                        <CardTitle className="text-2xl text-primary">{stats.totalRegistrations}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Total Attended</CardDescription>
-                        <CardTitle className="text-2xl text-purple-400">{stats.totalAttended}</CardTitle>
+                        <CardTitle className="text-2xl text-primary">{stats.totalAttended}</CardTitle>
                     </CardHeader>
                 </Card>
             </div>
@@ -218,14 +218,14 @@ export default function MyEventsPage() {
                                     </TableCell>
                                     <TableCell className="text-center">
                                         {event.status === "COMPLETED" ? (
-                                            <span className="font-medium text-green-400">{event.attended}</span>
+                                            <span className="font-medium text-primary">{event.attended}</span>
                                         ) : (
                                             <span className="text-muted-foreground">-</span>
                                         )}
                                     </TableCell>
                                     <TableCell className="text-center">
                                         {event.certificatesIssued > 0 ? (
-                                            <span className="font-medium text-blue-400">{event.certificatesIssued}</span>
+                                            <span className="font-medium text-primary">{event.certificatesIssued}</span>
                                         ) : (
                                             <span className="text-muted-foreground">-</span>
                                         )}

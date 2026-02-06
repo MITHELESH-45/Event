@@ -45,7 +45,7 @@ export default function RoleSelectionPage() {
             <div className="container flex flex-col items-center justify-center min-h-[calc(100vh-140px)] py-8">
                 <div className="flex-1 flex flex-col items-center justify-center">
                     <div className="text-center space-y-4 mb-12">
-                        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl bg-gradient-to-r from-primary via-yellow-500 to-red-500 bg-clip-text text-transparent">
                             Select Your Role
                         </h1>
                         <p className="text-muted-foreground text-lg max-w-lg mx-auto">

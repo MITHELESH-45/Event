@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,90 +9,169 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Users, CheckCircle, XCircle, Download, Search, Mail, FileText, Award } from "lucide-react"
+import { ArrowLeft, Users, CheckCircle, XCircle, Download, Search, Mail, Award, Loader2 } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 
-// Mock event data
-const mockEvent = {
-    id: "1",
-    title: "AI & Machine Learning Summit 2026",
-    date: "2026-02-15",
-    time: "09:00 AM",
-    location: "Tech Hub Convention Center",
-    capacity: 500,
-    status: "APPROVED"
+interface Registration {
+    _id: string
+    user: {
+        _id: string
+        name: string
+        email: string
+    }
+    status: string
+    createdAt: string
+    // Add these fields to model if needed, currently not in schema but used in UI
+    attendance?: string 
+    certificate?: boolean
 }
 
-// Mock registrations data
-const mockRegistrations = [
-    { id: "1", name: "John Doe", email: "john@example.com", registeredAt: "2026-01-20", status: "CONFIRMED", attendance: "PENDING", certificate: false },
-    { id: "2", name: "Jane Smith", email: "jane@example.com", registeredAt: "2026-01-21", status: "CONFIRMED", attendance: "ATTENDED", certificate: true },
-    { id: "3", name: "Mike Johnson", email: "mike@example.com", registeredAt: "2026-01-22", status: "CONFIRMED", attendance: "ATTENDED", certificate: true },
-    { id: "4", name: "Sarah Williams", email: "sarah@example.com", registeredAt: "2026-01-23", status: "CONFIRMED", attendance: "ABSENT", certificate: false },
-    { id: "5", name: "David Brown", email: "david@example.com", registeredAt: "2026-01-24", status: "CONFIRMED", attendance: "PENDING", certificate: false },
-    { id: "6", name: "Emily Davis", email: "emily@example.com", registeredAt: "2026-01-25", status: "PENDING", attendance: "PENDING", certificate: false },
-    { id: "7", name: "Chris Wilson", email: "chris@example.com", registeredAt: "2026-01-26", status: "CONFIRMED", attendance: "ATTENDED", certificate: true },
-    { id: "8", name: "Lisa Anderson", email: "lisa@example.com", registeredAt: "2026-01-27", status: "CONFIRMED", attendance: "PENDING", certificate: false },
-    { id: "9", name: "Tom Martinez", email: "tom@example.com", registeredAt: "2026-01-28", status: "CONFIRMED", attendance: "ATTENDED", certificate: false },
-    { id: "10", name: "Amy Taylor", email: "amy@example.com", registeredAt: "2026-01-29", status: "CONFIRMED", attendance: "PENDING", certificate: false },
-]
+interface Event {
+    _id: string
+    title: string
+    date: string
+    time: string
+    location: string
+    capacity: number
+}
 
 export default function ManageEventPage() {
     const params = useParams()
+    const eventId = params.id as string
+    const { toast } = useToast()
+    
+    const [event, setEvent] = useState<Event | null>(null)
+    const [registrations, setRegistrations] = useState<Registration[]>([])
+    const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
-    const [registrations, setRegistrations] = useState(mockRegistrations)
-    const [loading, setLoading] = useState<string | null>(null)
+    const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+    useEffect(() => {
+        const loadData = async () => {
+            const token = localStorage.getItem('token')
+            if (token && eventId) {
+                try {
+                    await Promise.all([
+                        fetchEventDetails(token),
+                        fetchRegistrations(token)
+                    ])
+                } catch (error) {
+                    console.error("Error loading data:", error)
+                } finally {
+                    setLoading(false)
+                }
+            }
+        }
+        loadData()
+    }, [eventId])
+
+    const fetchEventDetails = async (token: string) => {
+        try {
+            const res = await fetch(`http://localhost:5000/api/events/${eventId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            if (!res.ok) throw new Error('Failed to fetch event')
+            const data = await res.json()
+            setEvent(data)
+        } catch (error) {
+            console.error("Error fetching event:", error)
+        }
+    }
+
+    const fetchRegistrations = async (token: string) => {
+        try {
+            const res = await fetch(`http://localhost:5000/api/registrations/event/${eventId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            if (!res.ok) throw new Error('Failed to fetch registrations')
+            const data = await res.json()
+            setRegistrations(data)
+        } catch (error) {
+            console.error("Error fetching registrations:", error)
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to load registrations"
+            })
+        }
+    }
 
     const filteredRegistrations = registrations.filter(reg =>
-        reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        reg.email.toLowerCase().includes(searchTerm.toLowerCase())
+        reg.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        reg.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
     const stats = {
         total: registrations.length,
-        confirmed: registrations.filter(r => r.status === "CONFIRMED").length,
-        pending: registrations.filter(r => r.status === "PENDING").length,
-        attended: registrations.filter(r => r.attendance === "ATTENDED").length,
-        absent: registrations.filter(r => r.attendance === "ABSENT").length,
+        confirmed: registrations.filter(r => r.status === "confirmed").length,
+        pending: registrations.filter(r => r.status === "pending").length,
+        attended: registrations.filter(r => r.status === "attended").length, // Using status for attendance for now
         certificatesIssued: registrations.filter(r => r.certificate).length
     }
 
-    const markAttendance = async (regId: string, status: "ATTENDED" | "ABSENT") => {
-        setLoading(regId)
-        await new Promise(resolve => setTimeout(resolve, 500))
-        setRegistrations(prev => prev.map(r =>
-            r.id === regId ? { ...r, attendance: status } : r
-        ))
-        setLoading(null)
-    }
+    const markAttendance = async (regId: string, status: "attended" | "absent") => {
+        setActionLoading(regId)
+        try {
+            const token = localStorage.getItem('token')
+            if (!token) return
 
-    const issueCertificate = async (regId: string) => {
-        setLoading(`cert-${regId}`)
-        await new Promise(resolve => setTimeout(resolve, 500))
-        setRegistrations(prev => prev.map(r =>
-            r.id === regId ? { ...r, certificate: true } : r
-        ))
-        setLoading(null)
-    }
+            const body: any = { status }
+            if (status === 'attended') {
+                body.certificate = true
+            } else {
+                body.certificate = false
+            }
 
-    const issueAllCertificates = async () => {
-        setLoading("all-certs")
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        setRegistrations(prev => prev.map(r =>
-            r.attendance === "ATTENDED" ? { ...r, certificate: true } : r
-        ))
-        setLoading(null)
+            const res = await fetch(`http://localhost:5000/api/registrations/${regId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(body)
+            })
+
+            if (!res.ok) throw new Error('Failed to update status')
+            
+            // Optimistic update
+            setRegistrations(prev => prev.map(r => 
+                r._id === regId ? { ...r, status: status, certificate: status === 'attended' } : r
+            ))
+            toast({
+                title: "Success",
+                description: `Marked as ${status}`
+            })
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to update attendance"
+            })
+        } finally {
+            setActionLoading(null)
+        }
     }
 
     const getAttendanceBadge = (status: string) => {
         switch (status) {
-            case "ATTENDED":
-                return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Attended</Badge>
-            case "ABSENT":
+            case "attended":
+                return <Badge className="bg-primary/20 text-primary border-primary/30">Attended</Badge>
+            case "absent":
                 return <Badge variant="destructive">Absent</Badge>
             default:
                 return <Badge variant="outline">Pending</Badge>
         }
     }
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-[50vh]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        )
+    }
+
+    if (!event) return <div>Event not found</div>
 
     return (
         <div className="space-y-6">
@@ -105,7 +184,7 @@ export default function ManageEventPage() {
                 </Button>
                 <div>
                     <h1 className="text-2xl font-bold">Manage Event</h1>
-                    <p className="text-muted-foreground">{mockEvent.title}</p>
+                    <p className="text-muted-foreground">{event.title}</p>
                 </div>
             </div>
 
@@ -115,26 +194,26 @@ export default function ManageEventPage() {
                     <div className="flex flex-wrap gap-6 text-sm">
                         <div>
                             <span className="text-muted-foreground">Date: </span>
-                            <span className="font-medium">{mockEvent.date}</span>
+                            <span className="font-medium">{new Date(event.date).toLocaleDateString()}</span>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Time: </span>
-                            <span className="font-medium">{mockEvent.time}</span>
+                            <span className="font-medium">{event.time}</span>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Location: </span>
-                            <span className="font-medium">{mockEvent.location}</span>
+                            <span className="font-medium">{event.location}</span>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Capacity: </span>
-                            <span className="font-medium">{mockEvent.capacity}</span>
+                            <span className="font-medium">{event.capacity}</span>
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
             {/* Stats */}
-            <div className="grid gap-4 md:grid-cols-6">
+            <div className="grid gap-4 md:grid-cols-5">
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Total</CardDescription>
@@ -144,31 +223,25 @@ export default function ManageEventPage() {
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Confirmed</CardDescription>
-                        <CardTitle className="text-2xl text-green-400">{stats.confirmed}</CardTitle>
+                        <CardTitle className="text-2xl text-primary">{stats.confirmed}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Pending</CardDescription>
-                        <CardTitle className="text-2xl text-yellow-400">{stats.pending}</CardTitle>
+                        <CardTitle className="text-2xl text-yellow-500">{stats.pending}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Attended</CardDescription>
-                        <CardTitle className="text-2xl text-blue-400">{stats.attended}</CardTitle>
-                    </CardHeader>
-                </Card>
-                <Card className="bg-card/50 border-border/50">
-                    <CardHeader className="pb-2">
-                        <CardDescription>Absent</CardDescription>
-                        <CardTitle className="text-2xl text-red-400">{stats.absent}</CardTitle>
+                        <CardTitle className="text-2xl text-primary">{stats.attended}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Certificates</CardDescription>
-                        <CardTitle className="text-2xl text-purple-400">{stats.certificatesIssued}</CardTitle>
+                        <CardTitle className="text-2xl text-primary">{stats.certificatesIssued}</CardTitle>
                     </CardHeader>
                 </Card>
             </div>
@@ -230,13 +303,13 @@ export default function ManageEventPage() {
                                 </TableHeader>
                                 <TableBody>
                                     {filteredRegistrations.map(reg => (
-                                        <TableRow key={reg.id}>
-                                            <TableCell className="font-medium">{reg.name}</TableCell>
-                                            <TableCell>{reg.email}</TableCell>
-                                            <TableCell>{reg.registeredAt}</TableCell>
+                                        <TableRow key={reg._id}>
+                                            <TableCell className="font-medium">{reg.user.name}</TableCell>
+                                            <TableCell>{reg.user.email}</TableCell>
+                                            <TableCell>{new Date(reg.createdAt).toLocaleDateString()}</TableCell>
                                             <TableCell>
-                                                {reg.status === "CONFIRMED" ? (
-                                                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Confirmed</Badge>
+                                                {reg.status === "confirmed" ? (
+                                                    <Badge className="bg-primary/20 text-primary border-primary/30">Confirmed</Badge>
                                                 ) : (
                                                     <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Pending</Badge>
                                                 )}
@@ -272,27 +345,27 @@ export default function ManageEventPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {registrations.filter(r => r.status === "CONFIRMED").map(reg => (
-                                        <TableRow key={reg.id}>
-                                            <TableCell className="font-medium">{reg.name}</TableCell>
-                                            <TableCell>{reg.email}</TableCell>
-                                            <TableCell>{getAttendanceBadge(reg.attendance)}</TableCell>
+                                    {registrations.map(reg => (
+                                        <TableRow key={reg._id}>
+                                            <TableCell className="font-medium">{reg.user?.name || 'Unknown User'}</TableCell>
+                                            <TableCell>{reg.user?.email || 'No Email'}</TableCell>
+                                            <TableCell>{getAttendanceBadge(reg.status)}</TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
                                                     <Button
-                                                        variant={reg.attendance === "ATTENDED" ? "default" : "outline"}
+                                                        variant={reg.status === "attended" ? "default" : "outline"}
                                                         size="sm"
-                                                        disabled={loading === reg.id}
-                                                        onClick={() => markAttendance(reg.id, "ATTENDED")}
-                                                        className={reg.attendance === "ATTENDED" ? "bg-green-600 hover:bg-green-700" : ""}
+                                                        disabled={actionLoading === reg._id}
+                                                        onClick={() => markAttendance(reg._id, "attended")}
+                                                        className={reg.status === "attended" ? "bg-primary hover:bg-primary/90 text-primary-foreground" : ""}
                                                     >
                                                         <CheckCircle className="h-4 w-4 mr-1" /> Present
                                                     </Button>
                                                     <Button
-                                                        variant={reg.attendance === "ABSENT" ? "destructive" : "outline"}
+                                                        variant={reg.status === "absent" ? "destructive" : "outline"}
                                                         size="sm"
-                                                        disabled={loading === reg.id}
-                                                        onClick={() => markAttendance(reg.id, "ABSENT")}
+                                                        disabled={actionLoading === reg._id}
+                                                        onClick={() => markAttendance(reg._id, "absent")}
                                                     >
                                                         <XCircle className="h-4 w-4 mr-1" /> Absent
                                                     </Button>
@@ -305,77 +378,18 @@ export default function ManageEventPage() {
                         </CardContent>
                     </Card>
                 </TabsContent>
-
-                {/* Certificates Tab */}
+                
+                {/* Certificates Tab - Placeholder */}
                 <TabsContent value="certificates">
                     <Card className="bg-card/50 border-border/50">
                         <CardHeader>
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div>
-                                    <CardTitle>Issue Certificates</CardTitle>
-                                    <CardDescription>Generate and issue certificates to attendees</CardDescription>
-                                </div>
-                                <Button
-                                    onClick={issueAllCertificates}
-                                    disabled={loading === "all-certs"}
-                                >
-                                    <Award className="h-4 w-4 mr-2" />
-                                    {loading === "all-certs" ? "Issuing..." : "Issue All Certificates"}
-                                </Button>
-                            </div>
+                            <CardTitle>Certificates</CardTitle>
+                            <CardDescription>Issue certificates to attendees</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Attendance</TableHead>
-                                        <TableHead>Certificate</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {registrations.filter(r => r.attendance === "ATTENDED").map(reg => (
-                                        <TableRow key={reg.id}>
-                                            <TableCell className="font-medium">{reg.name}</TableCell>
-                                            <TableCell>{reg.email}</TableCell>
-                                            <TableCell>{getAttendanceBadge(reg.attendance)}</TableCell>
-                                            <TableCell>
-                                                {reg.certificate ? (
-                                                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Issued</Badge>
-                                                ) : (
-                                                    <Badge variant="outline">Not Issued</Badge>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {reg.certificate ? (
-                                                    <Button variant="ghost" size="sm">
-                                                        <Download className="h-4 w-4 mr-1" /> Download
-                                                    </Button>
-                                                ) : (
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        disabled={loading === `cert-${reg.id}`}
-                                                        onClick={() => issueCertificate(reg.id)}
-                                                    >
-                                                        <Award className="h-4 w-4 mr-1" />
-                                                        {loading === `cert-${reg.id}` ? "Issuing..." : "Issue"}
-                                                    </Button>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                            {registrations.filter(r => r.attendance === "ATTENDED").length === 0 && (
-                                <div className="text-center py-8">
-                                    <Award className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                                    <p className="text-muted-foreground">No attendees to issue certificates to yet.</p>
-                                    <p className="text-sm text-muted-foreground">Mark attendance first in the Attendance tab.</p>
-                                </div>
-                            )}
+                             <div className="text-center py-8 text-muted-foreground">
+                                Certificate generation enabled for attended participants.
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
