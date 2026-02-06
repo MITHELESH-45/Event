@@ -15,6 +15,10 @@ export default function RegisterPage() {
     const searchParams = useSearchParams()
     const role = searchParams.get("role")
     const [loading, setLoading] = useState(false)
+    const [name, setName] = useState("")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [confirmPassword, setConfirmPassword] = useState("")
 
     useEffect(() => {
         if (!role) {
@@ -28,12 +32,27 @@ export default function RegisterPage() {
         e.preventDefault()
         setLoading(true)
 
-        // Simulate API call
-        setTimeout(() => {
+        if (password !== confirmPassword) {
             setLoading(false)
-            // Redirect to login after registration
-            router.push(`/auth/login?role=${role}`)
-        }, 1500)
+            return
+        }
+
+        fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, password, role }),
+        })
+            .then(async (res) => {
+                if (!res.ok) throw new Error("Failed")
+                return res.json()
+            })
+            .then(() => {
+                setLoading(false)
+                router.push(`/auth/login?role=${role}`)
+            })
+            .catch(() => {
+                setLoading(false)
+            })
     }
 
     if (!role || role === 'admin') return null
@@ -52,19 +71,19 @@ export default function RegisterPage() {
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="name">Full Name</Label>
-                                <Input id="name" placeholder="John Doe" required />
+                                <Input id="name" placeholder="John Doe" required value={name} onChange={(e) => setName(e.target.value)} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
-                                <Input id="email" type="email" placeholder="name@example.com" required />
+                                <Input id="email" type="email" placeholder="name@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="password">Password</Label>
-                                <Input id="password" type="password" required />
+                                <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="confirm-password">Confirm Password</Label>
-                                <Input id="confirm-password" type="password" required />
+                                <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                             </div>
                         </CardContent>
                         <CardFooter className="flex flex-col space-y-4">

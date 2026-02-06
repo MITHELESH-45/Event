@@ -15,6 +15,8 @@ export default function LoginPage() {
     const searchParams = useSearchParams()
     const role = searchParams.get("role")
     const [loading, setLoading] = useState(false)
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
 
     useEffect(() => {
         if (!role) {
@@ -26,14 +28,29 @@ export default function LoginPage() {
         e.preventDefault()
         setLoading(true)
 
-        // Simulate API call
-        setTimeout(() => {
-            setLoading(false)
-            // Redirect based on role
-            if (role === "admin") router.push("/admin/dashboard")
-            else if (role === "organizer") router.push("/organizer/dashboard")
-            else if (role === "user") router.push("/user/dashboard")
-        }, 1500)
+        fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password, role }),
+        })
+            .then(async (res) => {
+                if (!res.ok) throw new Error("Failed")
+                return res.json()
+            })
+            .then((data) => {
+                if (data?.user) {
+                    try {
+                        localStorage.setItem("currentUser", JSON.stringify(data.user))
+                    } catch {}
+                }
+                setLoading(false)
+                if (role === "admin") router.push("/admin/dashboard")
+                else if (role === "organizer") router.push("/organizer/dashboard")
+                else if (role === "user") router.push("/user/dashboard")
+            })
+            .catch(() => {
+                setLoading(false)
+            })
     }
 
     if (!role) return null
@@ -52,7 +69,7 @@ export default function LoginPage() {
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
-                                <Input id="email" type="email" placeholder="name@example.com" required />
+                                <Input id="email" type="email" placeholder="name@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
@@ -61,7 +78,7 @@ export default function LoginPage() {
                                         Forgot password?
                                     </Link>
                                 </div>
-                                <Input id="password" type="password" required />
+                                <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                             </div>
                         </CardContent>
                         <CardFooter className="flex flex-col space-y-4">

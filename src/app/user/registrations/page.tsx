@@ -155,7 +155,7 @@ export default function MyRegistrationsPage() {
             <Card className="bg-card/50 border-border/50">
                 <CardHeader>
                     <CardTitle>Upcoming Events</CardTitle>
-                    <CardDescription>Events you're registered for</CardDescription>
+                    <CardDescription>Events you&apos;re registered for</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {upcomingRegistrations.length > 0 ? (
