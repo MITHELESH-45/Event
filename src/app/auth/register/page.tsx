@@ -15,14 +15,10 @@ export default function RegisterPage() {
     const searchParams = useSearchParams()
     const role = searchParams.get("role")
     const [loading, setLoading] = useState(false)
-    const [showPassword, setShowPassword] = useState(false)
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        password: '',
-        confirmPassword: ''
-    })
+    const [name, setName] = useState("")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [confirmPassword, setConfirmPassword] = useState("")
 
     useEffect(() => {
         if (!role) {
@@ -46,34 +42,27 @@ export default function RegisterPage() {
 
         setLoading(true)
 
-        try {
-            const res = await fetch('http://localhost:5000/api/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    name: formData.name,
-                    email: formData.email,
-                    password: formData.password,
-                    role: role
-                })
-            })
-
-            const data = await res.json()
-
-            if (res.ok) {
-                alert("Registration successful! Please login.")
-                router.push(`/auth/login?role=${role}`)
-            } else {
-                alert(data.message || "Registration failed")
-            }
-        } catch (error) {
-            console.error(error)
-            alert("An error occurred. Please try again.")
-        } finally {
+        if (password !== confirmPassword) {
             setLoading(false)
+            return
         }
+
+        fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, password, role }),
+        })
+            .then(async (res) => {
+                if (!res.ok) throw new Error("Failed")
+                return res.json()
+            })
+            .then(() => {
+                setLoading(false)
+                router.push(`/auth/login?role=${role}`)
+            })
+            .catch(() => {
+                setLoading(false)
+            })
     }
 
     if (!role || role === 'admin') return null
@@ -92,63 +81,19 @@ export default function RegisterPage() {
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="name">Full Name</Label>
-                                <Input id="name" placeholder="John Doe" required value={formData.name} onChange={handleChange} />
+                                <Input id="name" placeholder="John Doe" required value={name} onChange={(e) => setName(e.target.value)} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
-                                <Input id="email" type="email" placeholder="name@example.com" required value={formData.email} onChange={handleChange} />
+                                <Input id="email" type="email" placeholder="name@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="password">Password</Label>
-                                <div className="relative">
-                                    <Input 
-                                        id="password" 
-                                        type={showPassword ? "text" : "password"} 
-                                        required 
-                                        value={formData.password} 
-                                        onChange={handleChange} 
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                                        ) : (
-                                            <Eye className="h-4 w-4 text-muted-foreground" />
-                                        )}
-                                        <span className="sr-only">Toggle password visibility</span>
-                                    </Button>
-                                </div>
+                                <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                                <div className="relative">
-                                    <Input 
-                                        id="confirmPassword" 
-                                        type={showConfirmPassword ? "text" : "password"} 
-                                        required 
-                                        value={formData.confirmPassword} 
-                                        onChange={handleChange} 
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    >
-                                        {showConfirmPassword ? (
-                                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                                        ) : (
-                                            <Eye className="h-4 w-4 text-muted-foreground" />
-                                        )}
-                                        <span className="sr-only">Toggle password visibility</span>
-                                    </Button>
-                                </div>
+                                <Label htmlFor="confirm-password">Confirm Password</Label>
+                                <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                             </div>
                         </CardContent>
                         <CardFooter className="flex flex-col space-y-4">
