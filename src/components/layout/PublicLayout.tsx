@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { Navbar } from "./Navbar"
 import { Footer } from "./Footer"
 
@@ -8,7 +9,9 @@ interface PublicLayoutProps {
 export function PublicLayout({ children }: PublicLayoutProps) {
     return (
         <div className="flex min-h-screen flex-col">
-            <Navbar />
+            <Suspense fallback={<div className="h-16 border-b bg-background/80" />}>
+                <Navbar />
+            </Suspense>
             <main className="flex-1">
                 {children}
             </main>

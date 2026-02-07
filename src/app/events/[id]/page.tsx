@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { PublicLayout } from "@/components/layout/PublicLayout"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -43,10 +44,11 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
         <PublicLayout>
             {/* Hero Section */}
             <div className="relative h-[300px] md:h-[400px] w-full overflow-hidden">
-                <img
+                <Image
                     src={event.banner}
                     alt={event.title}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
                 <div className="absolute bottom-0 left-0 container py-8">

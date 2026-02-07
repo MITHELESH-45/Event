@@ -5,14 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Users, FileClock, CheckCircle, XCircle, Loader2 } from "lucide-react"
+import { Calendar, Users, FileClock, CheckCircle, XCircle, Loader2, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
+import { toast } from "sonner"
 
 export default function AdminDashboard() {
     const router = useRouter()
     const [events, setEvents] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+    const [analytics, setAnalytics] = useState<any>(null)
+    const [deleting, setDeleting] = useState<string | null>(null)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -24,14 +27,23 @@ export default function AdminDashboard() {
                 }
 
                 // Fetch events
-                const res = await fetch('http://localhost:5000/api/events', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                const eventsRes = await fetch('http://localhost:5000/api/events', {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 })
-                if (res.ok) {
-                    const data = await res.json()
+                
+                // Fetch analytics
+                const analyticsRes = await fetch('http://localhost:5000/api/admin/analytics', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+
+                if (eventsRes.ok) {
+                    const data = await eventsRes.json()
                     setEvents(data)
+                }
+
+                if (analyticsRes.ok) {
+                    const data = await analyticsRes.json()
+                    setAnalytics(data)
                 }
 
             } catch (error) {
@@ -44,10 +56,48 @@ export default function AdminDashboard() {
         fetchData()
     }, [router])
 
+    const handleDelete = async (eventId: string) => {
+        if (!confirm("Are you sure you want to delete this event?")) return
+
+        setDeleting(eventId)
+        try {
+            const token = localStorage.getItem('token')
+            const res = await fetch(`http://localhost:5000/api/events/${eventId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+
+            if (res.ok) {
+                setEvents(prev => prev.filter(e => e._id !== eventId))
+                toast.success("Event deleted successfully")
+                
+                // Refresh analytics if needed (simple decrement for now)
+                if (analytics && analytics.stats) {
+                    setAnalytics((prev: any) => ({
+                        ...prev,
+                        stats: {
+                            ...prev.stats,
+                            totalEvents: Math.max(0, prev.stats.totalEvents - 1)
+                        }
+                    }))
+                }
+            } else {
+                toast.error("Failed to delete event")
+            }
+        } catch (error) {
+            console.error("Failed to delete event", error)
+            toast.error("Error deleting event")
+        } finally {
+            setDeleting(null)
+        }
+    }
+
     const stats = [
-        { title: "Total Events", value: events.length.toString(), icon: Calendar, description: "All events" },
-        { title: "Pending Approvals", value: "0", icon: FileClock, description: "Action needed" },
-        { title: "Total Registrations", value: events.reduce((acc, curr) => acc + (curr.registered || 0), 0).toString(), icon: Users, description: "Total" },
+        { title: "Total Events", value: analytics?.stats?.totalEvents?.toString() || "0", icon: Calendar, description: "All events" },
+        { title: "Pending Approvals", value: analytics?.stats?.pendingApprovals?.toString() || "0", icon: FileClock, description: "Action needed" },
+        { title: "Total Registrations", value: analytics?.stats?.totalRegistrations?.toString() || "0", icon: Users, description: "Total" },
     ]
 
     if (loading) {
@@ -108,13 +158,24 @@ export default function AdminDashboard() {
                                         <TableCell>{event.organizer?.name || 'Unknown'}</TableCell>
                                         <TableCell>{event.date ? format(new Date(event.date), 'yyyy-MM-dd') : 'N/A'}</TableCell>
                                         <TableCell>
-                                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                                            <Badge variant="outline" className={`
+                                                ${event.status === 'approved' ? 'bg-green-500/10 text-green-600 border-green-200' : ''}
+                                                ${event.status === 'pending' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-200' : ''}
+                                                ${event.status === 'rejected' ? 'bg-red-500/10 text-red-600 border-red-200' : ''}
+                                            `}>
                                                 {event.status}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right space-x-2">
-                                            {/* Placeholder for actions */}
-                                            <span className="text-muted-foreground text-sm">-</span>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="text-destructive hover:text-destructive/90"
+                                                onClick={() => handleDelete(event._id)}
+                                                disabled={deleting === event._id}
+                                            >
+                                                {deleting === event._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ))

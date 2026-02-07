@@ -28,14 +28,10 @@ export default function RegisterPage() {
         }
     }, [role, router])
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.id]: e.target.value })
-    }
-
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault()
         
-        if (formData.password !== formData.confirmPassword) {
+        if (password !== confirmPassword) {
             alert("Passwords do not match")
             return
         }

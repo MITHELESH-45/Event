@@ -1,120 +1,101 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
-import { Calendar, MapPin, Users, Search, CheckCircle, XCircle, Eye, Clock, User } from "lucide-react"
+import { Calendar, MapPin, Users, Search, CheckCircle, XCircle, Eye, Clock, User, Loader2 } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-
-// Mock pending events data
-const mockPendingEvents = [
-    {
-        id: "1",
-        title: "Blockchain Technology Summit",
-        description: "Explore the future of blockchain and decentralized technologies with industry leaders.",
-        organizer: "Tech Innovators Inc.",
-        organizerEmail: "events@techinnovators.com",
-        date: "2026-03-15",
-        time: "09:00 AM",
-        location: "Crypto Arena",
-        capacity: 400,
-        category: "Technology",
-        submittedAt: "2026-01-28",
-        status: "PENDING"
-    },
-    {
-        id: "2",
-        title: "Digital Marketing Masterclass",
-        description: "Advanced strategies for digital marketing success in 2026.",
-        organizer: "MarketPro Academy",
-        organizerEmail: "contact@marketpro.com",
-        date: "2026-03-20",
-        time: "10:00 AM",
-        location: "Business Hub",
-        capacity: 150,
-        category: "Business",
-        submittedAt: "2026-01-29",
-        status: "PENDING"
-    },
-    {
-        id: "3",
-        title: "Data Science Workshop",
-        description: "Hands-on workshop on machine learning and data analytics.",
-        organizer: "DataLabs",
-        organizerEmail: "workshops@datalabs.io",
-        date: "2026-03-25",
-        time: "09:30 AM",
-        location: "Tech Campus",
-        capacity: 60,
-        category: "Workshop",
-        submittedAt: "2026-01-30",
-        status: "PENDING"
-    },
-    {
-        id: "4",
-        title: "Sustainable Business Forum",
-        description: "Discussions on sustainable business practices and green initiatives.",
-        organizer: "Green Future Foundation",
-        organizerEmail: "events@greenfuture.org",
-        date: "2026-04-01",
-        time: "11:00 AM",
-        location: "Eco Center",
-        capacity: 200,
-        category: "Business",
-        submittedAt: "2026-01-31",
-        status: "PENDING"
-    },
-    {
-        id: "5",
-        title: "Mobile App Development Bootcamp",
-        description: "Intensive 2-day bootcamp on React Native and Flutter.",
-        organizer: "CodeCraft Academy",
-        organizerEmail: "info@codecraft.dev",
-        date: "2026-04-05",
-        time: "09:00 AM",
-        location: "Developer Hub",
-        capacity: 40,
-        category: "Workshop",
-        submittedAt: "2026-02-01",
-        status: "PENDING"
-    }
-]
-
-const recentlyProcessed = [
-    { id: "a1", title: "AI Innovation Conference", status: "APPROVED", processedAt: "2026-01-27" },
-    { id: "a2", title: "Startup Networking Event", status: "APPROVED", processedAt: "2026-01-26" },
-    { id: "a3", title: "Cryptocurrency Trading Workshop", status: "REJECTED", processedAt: "2026-01-25", reason: "Incomplete documentation" },
-    { id: "a4", title: "Cloud Security Summit", status: "APPROVED", processedAt: "2026-01-24" }
-]
+import { toast } from "sonner"
+import { format } from "date-fns"
 
 export default function AdminApprovalsPage() {
-    const [events, setEvents] = useState(mockPendingEvents)
+    const [events, setEvents] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
     const [processing, setProcessing] = useState<string | null>(null)
-    const [selectedEvent, setSelectedEvent] = useState<typeof mockPendingEvents[0] | null>(null)
+    const [selectedEvent, setSelectedEvent] = useState<any | null>(null)
+    const [stats, setStats] = useState<any>(null)
+
+    useEffect(() => {
+        fetchData()
+    }, [])
+
+    const fetchData = async () => {
+        try {
+            const token = localStorage.getItem('token')
+            if (!token) return
+
+            // Fetch all events and filter client side for now, or use query param if supported
+            // Assuming API returns all events, we filter for pending
+            const res = await fetch('http://localhost:5000/api/events', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            
+            // Fetch stats
+            const statsRes = await fetch('http://localhost:5000/api/admin/analytics', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+
+            if (res.ok) {
+                const data = await res.json()
+                const pending = data.filter((e: any) => e.status === 'pending')
+                setEvents(pending)
+            }
+
+            if (statsRes.ok) {
+                const data = await statsRes.json()
+                setStats(data)
+            }
+        } catch (error) {
+            console.error("Failed to fetch data", error)
+            toast.error("Failed to load events")
+        } finally {
+            setLoading(false)
+        }
+    }
 
     const filteredEvents = events.filter(event =>
         event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.organizer.toLowerCase().includes(searchTerm.toLowerCase())
+        event.organizer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.organizer?.email?.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
-    const handleApprove = async (eventId: string) => {
+    const handleUpdateStatus = async (eventId: string, status: 'approved' | 'rejected') => {
         setProcessing(eventId)
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        setEvents(prev => prev.filter(e => e.id !== eventId))
-        setProcessing(null)
-        setSelectedEvent(null)
+        try {
+            const token = localStorage.getItem('token')
+            const res = await fetch(`http://localhost:5000/api/events/${eventId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status })
+            })
+
+            if (!res.ok) throw new Error("Failed to update status")
+
+            toast.success(`Event ${status} successfully`)
+            setEvents(prev => prev.filter(e => e._id !== eventId))
+            setSelectedEvent(null)
+            
+            // Refresh stats if needed, or just update locally
+        } catch (error) {
+            console.error(error)
+            toast.error("Something went wrong")
+        } finally {
+            setProcessing(null)
+        }
     }
 
-    const handleReject = async (eventId: string) => {
-        setProcessing(eventId)
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        setEvents(prev => prev.filter(e => e.id !== eventId))
-        setProcessing(null)
-        setSelectedEvent(null)
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-full min-h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        )
     }
 
     return (
@@ -135,20 +116,20 @@ export default function AdminApprovalsPage() {
                 </Card>
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
-                        <CardDescription>Approved (This Week)</CardDescription>
-                        <CardTitle className="text-3xl text-primary">12</CardTitle>
+                        <CardDescription>Total Events</CardDescription>
+                        <CardTitle className="text-3xl text-primary">{stats?.stats?.totalEvents || 0}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
-                        <CardDescription>Rejected (This Week)</CardDescription>
-                        <CardTitle className="text-3xl text-destructive">2</CardTitle>
+                        <CardDescription>Active Events</CardDescription>
+                        <CardTitle className="text-3xl text-primary">{stats?.stats?.activeEvents || 0}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
-                        <CardDescription>Avg. Review Time</CardDescription>
-                        <CardTitle className="text-3xl text-primary">1.5d</CardTitle>
+                        <CardDescription>Total Registrations</CardDescription>
+                        <CardTitle className="text-3xl text-primary">{stats?.stats?.totalRegistrations || 0}</CardTitle>
                     </CardHeader>
                 </Card>
             </div>
@@ -176,7 +157,7 @@ export default function AdminApprovalsPage() {
                     {filteredEvents.length > 0 ? (
                         <div className="space-y-4">
                             {filteredEvents.map(event => (
-                                <Card key={event.id} className="bg-background/50 border-border/30">
+                                <Card key={event._id} className="bg-background/50 border-border/30">
                                     <CardContent className="p-4">
                                         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                                             <div className="space-y-2 flex-1">
@@ -190,11 +171,11 @@ export default function AdminApprovalsPage() {
                                                 <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                                                     <span className="flex items-center gap-1">
                                                         <User className="h-4 w-4" />
-                                                        {event.organizer}
+                                                        {event.organizer?.name}
                                                     </span>
                                                     <span className="flex items-center gap-1">
                                                         <Calendar className="h-4 w-4" />
-                                                        {new Date(event.date).toLocaleDateString()}
+                                                        {event.date ? format(new Date(event.date), 'PPP') : 'N/A'}
                                                     </span>
                                                     <span className="flex items-center gap-1">
                                                         <MapPin className="h-4 w-4" />
@@ -206,7 +187,7 @@ export default function AdminApprovalsPage() {
                                                     </span>
                                                     <span className="flex items-center gap-1">
                                                         <Clock className="h-4 w-4" />
-                                                        Submitted {new Date(event.submittedAt).toLocaleDateString()}
+                                                        Submitted {event.createdAt ? format(new Date(event.createdAt), 'PP') : 'N/A'}
                                                     </span>
                                                 </div>
                                             </div>
@@ -230,12 +211,12 @@ export default function AdminApprovalsPage() {
                                                             <div className="grid grid-cols-2 gap-4">
                                                                 <div>
                                                                     <h4 className="font-medium mb-1">Organizer</h4>
-                                                                    <p className="text-sm text-muted-foreground">{event.organizer}</p>
-                                                                    <p className="text-sm text-muted-foreground">{event.organizerEmail}</p>
+                                                                    <p className="text-sm text-muted-foreground">{event.organizer?.name}</p>
+                                                                    <p className="text-sm text-muted-foreground">{event.organizer?.email}</p>
                                                                 </div>
                                                                 <div>
                                                                     <h4 className="font-medium mb-1">Date & Time</h4>
-                                                                    <p className="text-sm text-muted-foreground">{new Date(event.date).toLocaleDateString()} at {event.time}</p>
+                                                                    <p className="text-sm text-muted-foreground">{event.date ? format(new Date(event.date), 'PPP') : 'N/A'} at {event.time}</p>
                                                                 </div>
                                                                 <div>
                                                                     <h4 className="font-medium mb-1">Location</h4>
@@ -250,19 +231,19 @@ export default function AdminApprovalsPage() {
                                                         <DialogFooter>
                                                             <Button
                                                                 variant="destructive"
-                                                                disabled={processing === event.id}
-                                                                onClick={() => handleReject(event.id)}
+                                                                disabled={processing === event._id}
+                                                                onClick={() => handleUpdateStatus(event._id, 'rejected')}
                                                             >
                                                                 <XCircle className="h-4 w-4 mr-1" />
-                                                                {processing === event.id ? "Processing..." : "Reject"}
+                                                                {processing === event._id ? "Processing..." : "Reject"}
                                                             </Button>
                                                             <Button
                                                                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                                                                disabled={processing === event.id}
-                                                                onClick={() => handleApprove(event.id)}
+                                                                disabled={processing === event._id}
+                                                                onClick={() => handleUpdateStatus(event._id, 'approved')}
                                                             >
                                                                 <CheckCircle className="h-4 w-4 mr-1" />
-                                                                {processing === event.id ? "Processing..." : "Approve"}
+                                                                {processing === event._id ? "Processing..." : "Approve"}
                                                             </Button>
                                                         </DialogFooter>
                                                     </DialogContent>
@@ -270,20 +251,20 @@ export default function AdminApprovalsPage() {
                                                 <Button
                                                     className="bg-primary hover:bg-primary/90 text-primary-foreground"
                                                     size="sm"
-                                                    disabled={processing === event.id}
-                                                    onClick={() => handleApprove(event.id)}
+                                                    disabled={processing === event._id}
+                                                    onClick={() => handleUpdateStatus(event._id, 'approved')}
                                                 >
                                                     <CheckCircle className="h-4 w-4 mr-1" />
-                                                    {processing === event.id ? "..." : "Approve"}
+                                                    {processing === event._id ? "..." : "Approve"}
                                                 </Button>
                                                 <Button
                                                     variant="destructive"
                                                     size="sm"
-                                                    disabled={processing === event.id}
-                                                    onClick={() => handleReject(event.id)}
+                                                    disabled={processing === event._id}
+                                                    onClick={() => handleUpdateStatus(event._id, 'rejected')}
                                                 >
                                                     <XCircle className="h-4 w-4 mr-1" />
-                                                    {processing === event.id ? "..." : "Reject"}
+                                                    {processing === event._id ? "..." : "Reject"}
                                                 </Button>
                                             </div>
                                         </div>
@@ -298,44 +279,6 @@ export default function AdminApprovalsPage() {
                             <p className="text-muted-foreground">No pending events to review</p>
                         </div>
                     )}
-                </CardContent>
-            </Card>
-
-            {/* Recently Processed */}
-            <Card className="bg-card/50 border-border/50">
-                <CardHeader>
-                    <CardTitle>Recently Processed</CardTitle>
-                    <CardDescription>Your latest approval decisions</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Event</TableHead>
-                                <TableHead>Decision</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Notes</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {recentlyProcessed.map(event => (
-                                <TableRow key={event.id}>
-                                    <TableCell className="font-medium">{event.title}</TableCell>
-                                    <TableCell>
-                                        {event.status === "APPROVED" ? (
-                                            <Badge className="bg-primary/20 text-primary border-primary/30">Approved</Badge>
-                                        ) : (
-                                            <Badge variant="destructive">Rejected</Badge>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>{new Date(event.processedAt).toLocaleDateString()}</TableCell>
-                                    <TableCell className="text-muted-foreground">
-                                        {event.reason || "-"}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
                 </CardContent>
             </Card>
         </div>

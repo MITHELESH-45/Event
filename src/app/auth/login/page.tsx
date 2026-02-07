@@ -24,10 +24,6 @@ export default function LoginPage() {
         }
     }, [role, router])
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.id]: e.target.value })
-    }
-
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
@@ -45,7 +41,10 @@ export default function LoginPage() {
                 if (data?.user) {
                     try {
                         localStorage.setItem("currentUser", JSON.stringify(data.user))
-                    } catch {}
+                    } catch { }
+                }
+                if (data?.token) {
+                    localStorage.setItem("token", data.token)
                 }
                 setLoading(false)
                 if (role === "admin") router.push("/admin/dashboard")
