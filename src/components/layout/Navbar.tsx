@@ -18,7 +18,7 @@ export function Navbar() {
                 <div className="container flex h-16 items-center justify-between">
                     <Link href="/" className="flex items-center space-x-2">
                         <Image src="/logo.png" alt="EventEdge Logo" width={32} height={32} />
-                        <span className="text-xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                        <span className="text-xl font-bold bg-gradient-to-r from-primary via-yellow-500 to-red-500 bg-clip-text text-transparent">
                             EventEdge
                         </span>
                     </Link>
@@ -32,7 +32,7 @@ export function Navbar() {
                             </Link>
                         ) : (
                             <Link href="/auth/role-selection?mode=register">
-                                <Button size="sm" className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
+                                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
                                     Get Started
                                 </Button>
                             </Link>
@@ -48,7 +48,7 @@ export function Navbar() {
             <div className="container flex h-16 items-center justify-between">
                 <Link href="/" className="flex items-center space-x-2">
                     <Image src="/logo.png" alt="EventEdge Logo" width={32} height={32} />
-                    <span className="text-xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                    <span className="text-xl font-bold bg-gradient-to-r from-primary via-yellow-500 to-red-500 bg-clip-text text-transparent">
                         EventEdge
                     </span>
                 </Link>
@@ -71,7 +71,7 @@ export function Navbar() {
                         </Button>
                     </Link>
                     <Link href="/auth/role-selection?mode=register">
-                        <Button size="sm" className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
+                        <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
                             Get Started
                         </Button>
                     </Link>
@@ -85,7 +85,7 @@ export function Navbar() {
                         </Button>
                     </Link>
                     <Link href="/auth/role-selection?mode=register">
-                        <Button size="sm" className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
+                        <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
                             Get Started
                         </Button>
                     </Link>

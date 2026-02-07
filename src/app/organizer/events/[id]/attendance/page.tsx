@@ -81,8 +81,8 @@ export default function AttendancePage() {
                                     <TableCell>{reg.email}</TableCell>
                                     <TableCell>
                                         <Badge variant="outline" className={
-                                            reg.status === 'PRESENT' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                                                'bg-gray-500/10 text-gray-500 border-gray-500/20'
+                                            reg.status === 'PRESENT' ? 'bg-primary/10 text-primary border-primary/20' :
+                                                'bg-muted/10 text-muted-foreground border-muted/20'
                                         }>
                                             {reg.status}
                                         </Badge>

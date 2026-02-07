@@ -1,103 +1,57 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Calendar, MapPin, Users, Search, Clock, ArrowRight } from "lucide-react"
+import { Calendar, MapPin, Users, Search, Clock, ArrowRight, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
-// Mock data for available events
-const mockEvents = [
-    {
-        id: "1",
-        title: "AI & Machine Learning Summit 2026",
-        description: "Explore the latest advancements in AI and machine learning with industry experts.",
-        date: "2026-02-15",
-        time: "09:00 AM",
-        location: "Tech Hub Convention Center",
-        capacity: 500,
-        registered: 342,
-        category: "Technology",
-        image: "/event-placeholder.jpg",
-        status: "OPEN"
-    },
-    {
-        id: "2",
-        title: "Startup Pitch Competition",
-        description: "Watch innovative startups pitch their ideas to top investors.",
-        date: "2026-02-20",
-        time: "02:00 PM",
-        location: "Innovation Campus",
-        capacity: 200,
-        registered: 198,
-        category: "Business",
-        image: "/event-placeholder.jpg",
-        status: "ALMOST_FULL"
-    },
-    {
-        id: "3",
-        title: "Web Development Bootcamp",
-        description: "Hands-on workshop covering React, Next.js, and modern web technologies.",
-        date: "2026-03-01",
-        time: "10:00 AM",
-        location: "Digital Learning Center",
-        capacity: 50,
-        registered: 50,
-        category: "Workshop",
-        image: "/event-placeholder.jpg",
-        status: "FULL"
-    },
-    {
-        id: "4",
-        title: "Cloud Computing Conference",
-        description: "Deep dive into AWS, Azure, and GCP with hands-on labs.",
-        date: "2026-03-10",
-        time: "09:00 AM",
-        location: "Cloud Arena",
-        capacity: 300,
-        registered: 156,
-        category: "Technology",
-        image: "/event-placeholder.jpg",
-        status: "OPEN"
-    },
-    {
-        id: "5",
-        title: "Design Thinking Workshop",
-        description: "Learn human-centered design principles and methodologies.",
-        date: "2026-03-15",
-        time: "11:00 AM",
-        location: "Creative Studio",
-        capacity: 40,
-        registered: 28,
-        category: "Workshop",
-        image: "/event-placeholder.jpg",
-        status: "OPEN"
-    },
-    {
-        id: "6",
-        title: "Cybersecurity Awareness Seminar",
-        description: "Essential security practices for modern organizations.",
-        date: "2026-03-20",
-        time: "03:00 PM",
-        location: "Security Center",
-        capacity: 150,
-        registered: 89,
-        category: "Technology",
-        image: "/event-placeholder.jpg",
-        status: "OPEN"
-    }
-]
+const categories = ["All", "Technology", "Business", "Workshop", "Health", "Art"]
 
-const categories = ["All", "Technology", "Business", "Workshop"]
+interface Event {
+    _id: string
+    title: string
+    description: string
+    date: string
+    time: string
+    location: string
+    capacity: number
+    registered: number
+    category: string
+    status: string
+}
 
 export default function AvailableEventsPage() {
+    const router = useRouter()
+    const [events, setEvents] = useState<Event[]>([])
+    const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedCategory, setSelectedCategory] = useState("All")
     const [registering, setRegistering] = useState<string | null>(null)
 
-    const filteredEvents = mockEvents.filter(event => {
+    useEffect(() => {
+        fetchEvents()
+    }, [])
+
+    const fetchEvents = async () => {
+        try {
+            const res = await fetch('http://localhost:5000/api/events')
+            if (!res.ok) throw new Error('Failed to fetch events')
+            const data = await res.json()
+            setEvents(data)
+        } catch (error) {
+            console.error("Error fetching events:", error)
+            toast.error("Failed to load events")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const filteredEvents = events.filter(event => {
         const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             event.description.toLowerCase().includes(searchTerm.toLowerCase())
         const matchesCategory = selectedCategory === "All" || event.category === selectedCategory
@@ -105,21 +59,56 @@ export default function AvailableEventsPage() {
     })
 
     const handleRegister = async (eventId: string) => {
+        const token = localStorage.getItem('token')
+        if (!token) {
+            toast.error("Please login to register")
+            router.push('/auth/login')
+            return
+        }
+
         setRegistering(eventId)
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        alert("Successfully registered for the event!")
-        setRegistering(null)
+        try {
+            const res = await fetch('http://localhost:5000/api/registrations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ eventId })
+            })
+
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(data.message || 'Failed to register')
+            }
+
+            toast.success("Successfully registered for the event!")
+            fetchEvents() // Refresh list to update counts
+        } catch (error: any) {
+            console.error("Registration error:", error)
+            toast.error(error.message)
+        } finally {
+            setRegistering(null)
+        }
     }
 
     const getStatusBadge = (status: string, registered: number, capacity: number) => {
-        if (status === "FULL") {
+        if (registered >= capacity) {
             return <Badge variant="destructive">Full</Badge>
         }
         if (registered / capacity > 0.9) {
-            return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Almost Full</Badge>
+            return <Badge className="bg-yellow-500/20 text-primary border-yellow-500/30">Almost Full</Badge>
         }
-        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Open</Badge>
+        return <Badge className="bg-primary/20 text-primary border-primary/30">Open</Badge>
+    }
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-[50vh]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        )
     }
 
     return (
@@ -148,6 +137,7 @@ export default function AvailableEventsPage() {
                             variant={selectedCategory === category ? "default" : "outline"}
                             size="sm"
                             onClick={() => setSelectedCategory(category)}
+                            className={selectedCategory === category ? "bg-primary text-primary-foreground" : ""}
                         >
                             {category}
                         </Button>
@@ -158,7 +148,7 @@ export default function AvailableEventsPage() {
             {/* Events Grid */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredEvents.map(event => (
-                    <Card key={event.id} className="bg-card/50 border-border/50 hover:border-primary/30 transition-all duration-300 overflow-hidden group">
+                    <Card key={event._id} className="bg-card/50 border-border/50 hover:border-primary/30 transition-all duration-300 overflow-hidden group">
                         <div className="h-40 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
                             <Calendar className="h-16 w-16 text-primary/50" />
                         </div>
@@ -193,14 +183,14 @@ export default function AvailableEventsPage() {
                         </CardContent>
                         <CardFooter className="pt-2 flex gap-2">
                             <Button
-                                className="flex-1"
-                                disabled={event.status === "FULL" || registering === event.id}
-                                onClick={() => handleRegister(event.id)}
+                                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                                disabled={event.registered >= event.capacity || registering === event._id}
+                                onClick={() => handleRegister(event._id)}
                             >
-                                {registering === event.id ? "Registering..." : event.status === "FULL" ? "Full" : "Register Now"}
+                                {registering === event._id ? "Registering..." : event.registered >= event.capacity ? "Full" : "Register Now"}
                             </Button>
                             <Button variant="outline" size="icon" asChild>
-                                <Link href={`/user/events/${event.id}`}>
+                                <Link href={`/user/events/${event._id}`}>
                                     <ArrowRight className="h-4 w-4" />
                                 </Link>
                             </Button>

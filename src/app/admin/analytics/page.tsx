@@ -58,8 +58,8 @@ export default function AdminAnalyticsPage() {
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</div>
                         <p className="text-xs text-muted-foreground flex items-center mt-1">
-                            <ArrowUp className="h-3 w-3 text-green-400 mr-1" />
-                            <span className="text-green-400">+12%</span> from last month
+                            <ArrowUp className="h-3 w-3 text-primary mr-1" />
+                            <span className="text-primary">+12%</span> from last month
                         </p>
                     </CardContent>
                 </Card>
@@ -71,8 +71,8 @@ export default function AdminAnalyticsPage() {
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.totalEvents}</div>
                         <p className="text-xs text-muted-foreground flex items-center mt-1">
-                            <ArrowUp className="h-3 w-3 text-green-400 mr-1" />
-                            <span className="text-green-400">+8</span> new this month
+                            <ArrowUp className="h-3 w-3 text-primary mr-1" />
+                            <span className="text-primary">+8</span> new this month
                         </p>
                     </CardContent>
                 </Card>
@@ -84,8 +84,8 @@ export default function AdminAnalyticsPage() {
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.totalRegistrations.toLocaleString()}</div>
                         <p className="text-xs text-muted-foreground flex items-center mt-1">
-                            <ArrowUp className="h-3 w-3 text-green-400 mr-1" />
-                            <span className="text-green-400">+{stats.monthlyGrowth}%</span> growth
+                            <ArrowUp className="h-3 w-3 text-primary mr-1" />
+                            <span className="text-primary">+{stats.monthlyGrowth}%</span> growth
                         </p>
                     </CardContent>
                 </Card>
@@ -129,7 +129,7 @@ export default function AdminAnalyticsPage() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <div
-                                                className="h-2 bg-blue-500 rounded-full transition-all"
+                                                className="h-2 bg-red-600 rounded-full transition-all"
                                                 style={{ width: `${(data.events / 25) * 100}%` }}
                                             />
                                             <span className="text-xs text-muted-foreground">{data.events} events</span>
@@ -144,7 +144,7 @@ export default function AdminAnalyticsPage() {
                                 <span>Registrations</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-blue-500 rounded" />
+                                <div className="w-3 h-3 bg-red-600 rounded" />
                                 <span>Events</span>
                             </div>
                         </div>
@@ -163,7 +163,7 @@ export default function AdminAnalyticsPage() {
                     <CardContent>
                         <div className="space-y-4">
                             {categoryDistribution.map((cat, index) => {
-                                const colors = ["bg-primary", "bg-blue-500", "bg-green-500", "bg-yellow-500"]
+                                const colors = ["bg-primary", "bg-red-600", "bg-yellow-500", "bg-red-800"]
                                 return (
                                     <div key={cat.category} className="space-y-2">
                                         <div className="flex justify-between text-sm">
@@ -225,7 +225,7 @@ export default function AdminAnalyticsPage() {
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Active Events</CardDescription>
-                        <CardTitle className="text-3xl text-green-400">{stats.activeEvents}</CardTitle>
+                        <CardTitle className="text-3xl text-primary">{stats.activeEvents}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground">Currently running events</p>
@@ -234,7 +234,7 @@ export default function AdminAnalyticsPage() {
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Pending Approvals</CardDescription>
-                        <CardTitle className="text-3xl text-yellow-400">{stats.pendingApprovals}</CardTitle>
+                        <CardTitle className="text-3xl text-primary">{stats.pendingApprovals}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground">Events awaiting review</p>
@@ -242,8 +242,8 @@ export default function AdminAnalyticsPage() {
                 </Card>
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
-                        <CardDescription>Organizers</CardDescription>
-                        <CardTitle className="text-3xl text-blue-400">{stats.totalOrganizers}</CardTitle>
+                        <CardDescription>Total Organizers</CardDescription>
+                        <CardTitle className="text-3xl text-primary">{stats.totalOrganizers}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground">Registered organizers</p>

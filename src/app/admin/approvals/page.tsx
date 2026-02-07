@@ -130,25 +130,25 @@ export default function AdminApprovalsPage() {
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Pending Review</CardDescription>
-                        <CardTitle className="text-3xl text-yellow-400">{events.length}</CardTitle>
+                        <CardTitle className="text-3xl text-primary">{events.length}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Approved (This Week)</CardDescription>
-                        <CardTitle className="text-3xl text-green-400">12</CardTitle>
+                        <CardTitle className="text-3xl text-primary">12</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Rejected (This Week)</CardDescription>
-                        <CardTitle className="text-3xl text-red-400">2</CardTitle>
+                        <CardTitle className="text-3xl text-destructive">2</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card className="bg-card/50 border-border/50">
                     <CardHeader className="pb-2">
                         <CardDescription>Avg. Review Time</CardDescription>
-                        <CardTitle className="text-3xl text-blue-400">1.5d</CardTitle>
+                        <CardTitle className="text-3xl text-primary">1.5d</CardTitle>
                     </CardHeader>
                 </Card>
             </div>
@@ -257,7 +257,7 @@ export default function AdminApprovalsPage() {
                                                                 {processing === event.id ? "Processing..." : "Reject"}
                                                             </Button>
                                                             <Button
-                                                                className="bg-green-600 hover:bg-green-700"
+                                                                className="bg-primary hover:bg-primary/90 text-primary-foreground"
                                                                 disabled={processing === event.id}
                                                                 onClick={() => handleApprove(event.id)}
                                                             >
@@ -268,7 +268,7 @@ export default function AdminApprovalsPage() {
                                                     </DialogContent>
                                                 </Dialog>
                                                 <Button
-                                                    className="bg-green-600 hover:bg-green-700"
+                                                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
                                                     size="sm"
                                                     disabled={processing === event.id}
                                                     onClick={() => handleApprove(event.id)}
@@ -293,7 +293,7 @@ export default function AdminApprovalsPage() {
                         </div>
                     ) : (
                         <div className="text-center py-12">
-                            <CheckCircle className="h-12 w-12 mx-auto text-green-400 mb-4" />
+                            <CheckCircle className="h-12 w-12 mx-auto text-primary mb-4" />
                             <h3 className="text-lg font-medium">All caught up!</h3>
                             <p className="text-muted-foreground">No pending events to review</p>
                         </div>
@@ -323,7 +323,7 @@ export default function AdminApprovalsPage() {
                                     <TableCell className="font-medium">{event.title}</TableCell>
                                     <TableCell>
                                         {event.status === "APPROVED" ? (
-                                            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Approved</Badge>
+                                            <Badge className="bg-primary/20 text-primary border-primary/30">Approved</Badge>
                                         ) : (
                                             <Badge variant="destructive">Rejected</Badge>
                                         )}

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { PublicLayout } from "@/components/layout/PublicLayout"
-import { Loader2 } from "lucide-react"
+import { Loader2, Eye, EyeOff } from "lucide-react"
 
 export default function RegisterPage() {
     const router = useRouter()
@@ -28,8 +28,18 @@ export default function RegisterPage() {
         }
     }, [role, router])
 
-    const handleRegister = (e: React.FormEvent) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData({ ...formData, [e.target.id]: e.target.value })
+    }
+
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault()
+        
+        if (formData.password !== formData.confirmPassword) {
+            alert("Passwords do not match")
+            return
+        }
+
         setLoading(true)
 
         if (password !== confirmPassword) {

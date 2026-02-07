@@ -1,25 +1,62 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Users, Award, Plus } from "lucide-react"
+import { Calendar, Users, Award, Plus, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { format } from "date-fns"
 
 export default function OrganizerDashboard() {
-    // Mock data
+    const router = useRouter()
+    const [events, setEvents] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                const token = localStorage.getItem('token')
+                if (!token) {
+                    router.push('/auth/login')
+                    return
+                }
+
+                const res = await fetch('http://localhost:5000/api/events/my-events', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+
+                if (res.ok) {
+                    const data = await res.json()
+                    setEvents(data)
+                }
+            } catch (error) {
+                console.error("Failed to fetch events", error)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchEvents()
+    }, [router])
+
     const stats = [
-        { title: "Events Created", value: "8", icon: Calendar, description: "Total events" },
-        { title: "Total Participants", value: "342", icon: Users, description: "Across all events" },
-        { title: "Certificates Issued", value: "156", icon: Award, description: "Published" },
+        { title: "Events Created", value: events.length.toString(), icon: Calendar, description: "Total events" },
+        { title: "Total Participants", value: events.reduce((acc, curr) => acc + (curr.registered || 0), 0).toString(), icon: Users, description: "Across all events" },
+        { title: "Certificates Issued", value: "0", icon: Award, description: "Published" },
     ]
 
-    const myEvents = [
-        { id: 1, title: "Intro to React", date: "2024-03-25", participants: 45, status: "APPROVED" },
-        { id: 2, title: "Data Science Workshop", date: "2024-04-10", participants: 120, status: "PENDING" },
-        { id: 3, title: "Design Systems Talk", date: "2024-02-15", participants: 88, status: "COMPLETED" },
-    ]
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-6">
@@ -59,35 +96,37 @@ export default function OrganizerDashboard() {
                             <TableRow>
                                 <TableHead>Event Title</TableHead>
                                 <TableHead>Date</TableHead>
-                                <TableHead>Participants</TableHead>
+                                <TableHead>Capacity</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {myEvents.map((event) => (
-                                <TableRow key={event.id}>
-                                    <TableCell className="font-medium">{event.title}</TableCell>
-                                    <TableCell>{event.date}</TableCell>
-                                    <TableCell>{event.participants}</TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className={
-                                            event.status === 'APPROVED' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                                                event.status === 'PENDING' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
-                                                    'bg-gray-500/10 text-gray-500 border-gray-500/20'
-                                        }>
-                                            {event.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="ghost" size="sm" asChild>
-                                            <Link href={`/organizer/events/${event.id}/manage`}>
-                                                Manage
-                                            </Link>
-                                        </Button>
-                                    </TableCell>
+                            {events.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center">No events found</TableCell>
                                 </TableRow>
-                            ))}
+                            ) : (
+                                events.map((event) => (
+                                    <TableRow key={event._id}>
+                                        <TableCell className="font-medium">{event.title}</TableCell>
+                                        <TableCell>{event.date ? format(new Date(event.date), 'yyyy-MM-dd') : 'N/A'}</TableCell>
+                                        <TableCell>{event.capacity}</TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                                                Published
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="sm" asChild>
+                                                <Link href={`/organizer/events/${event._id}/manage`}>
+                                                    Manage
+                                                </Link>
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
                         </TableBody>
                     </Table>
                 </Card>

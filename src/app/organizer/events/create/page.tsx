@@ -16,6 +16,8 @@ import { Calendar as CalendarIcon, Upload, CheckCircle2, ChevronRight, ChevronLe
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
 
+
+
 const steps = [
     { id: 1, title: "Basic Details" },
     { id: 2, title: "Schedule" },
@@ -49,10 +51,46 @@ export default function CreateEventPage() {
 
     const handleSubmit = async () => {
         setLoading(true)
-        // Simulate API
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        setLoading(false)
-        router.push("/organizer/dashboard")
+        
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert("You are not logged in");
+                router.push("/auth/login?role=organizer");
+                return;
+            }
+
+            const res = await fetch('http://localhost:5000/api/events', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: formData.title,
+                    description: formData.description,
+                    date: formData.startDate,
+                    time: `${formData.startTime} - ${formData.endTime}`,
+                    location: formData.location,
+                    capacity: formData.capacity,
+                    category: formData.type,
+                    status: 'published'
+                })
+            });
+
+            if (res.ok) {
+                 alert("Event created successfully!");
+                 router.push("/organizer/dashboard");
+            } else {
+                 const data = await res.json();
+                 alert(data.message || "Failed to create event");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error creating event");
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -290,7 +328,7 @@ export default function CreateEventPage() {
                                 Next <ChevronRight className="ml-2 h-4 w-4" />
                             </Button>
                         ) : (
-                            <Button onClick={handleSubmit} disabled={loading} className="w-32 bg-green-600 hover:bg-green-700 text-white">
+                            <Button onClick={handleSubmit} disabled={loading} className="w-32 bg-primary hover:bg-primary/90 text-primary-foreground">
                                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Publish Event"}
                             </Button>
                         )}

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { Toaster } from "@/components/ui/toaster"
+import { Toaster as SonnerToaster } from "sonner"
 
 export const metadata: Metadata = {
   title: 'EventEdge - Event Management Platform',
@@ -13,7 +15,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body>{children}</body>
+      <body>
+        {children}
+        <Toaster />
+        <SonnerToaster richColors position="top-right" />
+      </body>
     </html>
   )
 }
