@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Users, FileClock, CheckCircle, XCircle, Loader2, Trash2, Eye } from "lucide-react"
+import { Calendar, Users, FileClock, CheckCircle, XCircle, Loader2, Trash2, Eye, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
@@ -19,43 +19,46 @@ export default function AdminDashboard() {
     const [analytics, setAnalytics] = useState<any>(null)
     const [deleting, setDeleting] = useState<string | null>(null)
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const token = localStorage.getItem('token')
-                if (!token) {
-                    router.push('/auth/login')
-                    return
-                }
-
-                // Fetch events
-                const eventsRes = await fetch('${API_URL}/api/events', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
-                
-                // Fetch analytics
-                const analyticsRes = await fetch(`${API_URL}/api/admin/analytics`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
-
-                if (eventsRes.ok) {
-                    const data = await eventsRes.json()
-                    setEvents(data)
-                }
-
-                if (analyticsRes.ok) {
-                    const data = await analyticsRes.json()
-                    setAnalytics(data)
-                }
-
-            } catch (error) {
-                console.error("Failed to fetch data", error)
-            } finally {
-                setLoading(false)
+    const fetchData = async () => {
+        try {
+            const token = localStorage.getItem('token')
+            if (!token) {
+                router.push('/auth/login')
+                return
             }
-        }
 
+            const [eventsRes, analyticsRes] = await Promise.all([
+                fetch(`${API_URL}/api/events`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                fetch(`${API_URL}/api/admin/analytics`, { headers: { 'Authorization': `Bearer ${token}` } })
+            ])
+
+            if (eventsRes.ok) {
+                const data = await eventsRes.json()
+                setEvents(data)
+            }
+            if (analyticsRes.ok) {
+                const data = await analyticsRes.json()
+                setAnalytics(data)
+            }
+        } catch (error) {
+            console.error("Failed to fetch data", error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
         fetchData()
+    }, [router])
+
+    // Refetch when user returns to the tab so Total Events and All Events list stay up to date
+    useEffect(() => {
+        const onFocus = () => {
+            const token = localStorage.getItem('token')
+            if (token) fetchData()
+        }
+        window.addEventListener('focus', onFocus)
+        return () => window.removeEventListener('focus', onFocus)
     }, [router])
 
     const handleDelete = async (eventId: string) => {
@@ -114,6 +117,9 @@ export default function AdminDashboard() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                <Button variant="outline" size="icon" onClick={() => fetchData()} title="Refresh">
+                    <RefreshCw className="h-4 w-4" />
+                </Button>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
