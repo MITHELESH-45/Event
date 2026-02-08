@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { API_URL } from "@/lib/api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Calendar, TrendingUp, Award, BarChart3, PieChart, Activity, ArrowUp, Loader2 } from "lucide-react"
 import { toast } from "sonner"
@@ -15,7 +16,7 @@ export default function AdminAnalyticsPage() {
                 const token = localStorage.getItem('token')
                 if (!token) return
 
-                const res = await fetch('http://localhost:5000/api/admin/analytics', {
+                const res = await fetch(`${API_URL}/api/admin/analytics`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
 

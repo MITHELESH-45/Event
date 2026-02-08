@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { API_URL } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -27,12 +28,12 @@ export default function AdminDashboard() {
                 }
 
                 // Fetch events
-                const eventsRes = await fetch('http://localhost:5000/api/events', {
+                const eventsRes = await fetch('${API_URL}/api/events', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 
                 // Fetch analytics
-                const analyticsRes = await fetch('http://localhost:5000/api/admin/analytics', {
+                const analyticsRes = await fetch(`${API_URL}/api/admin/analytics`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
 
@@ -62,7 +63,7 @@ export default function AdminDashboard() {
         setDeleting(eventId)
         try {
             const token = localStorage.getItem('token')
-            const res = await fetch(`http://localhost:5000/api/events/${eventId}`, {
+            const res = await fetch(`${API_URL}/api/events/${eventId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`

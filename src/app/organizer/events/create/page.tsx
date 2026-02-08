@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { API_URL } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -86,7 +87,7 @@ export default function CreateEventPage() {
             };
             console.log('Events payload:', payload);
 
-            const res = await fetch('http://localhost:5000/api/events', {
+            const res = await fetch(`${API_URL}/api/events`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -318,7 +319,7 @@ export default function CreateEventPage() {
 
                                             try {
                                                 setLoading(true);
-                                                const res = await fetch('http://localhost:5000/api/upload', {
+                                                const res = await fetch(`${API_URL}/api/upload`, {
                                                     method: 'POST',
                                                     body: formDataUpload
                                                 });

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { API_URL } from "@/lib/api"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -41,7 +42,7 @@ export default function AttendancePage() {
                     return
                 }
 
-                const res = await fetch(`http://localhost:5000/api/registrations/event/${id}`, {
+                const res = await fetch(`${API_URL}/api/registrations/event/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -72,7 +73,7 @@ export default function AttendancePage() {
             const token = localStorage.getItem('token')
             if (!token) return
 
-            const res = await fetch(`http://localhost:5000/api/registrations/${regId}`, {
+            const res = await fetch(`${API_URL}/api/registrations/${regId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

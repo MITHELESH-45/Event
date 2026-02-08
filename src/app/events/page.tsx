@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { API_URL } from "@/lib/api"
 import Link from "next/link"
 import Image from "next/image"
 import { PublicLayout } from "@/components/layout/PublicLayout"
@@ -15,7 +16,7 @@ export default function EventsPage() {
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const res = await fetch('http://localhost:5000/api/events')
+                const res = await fetch(`${API_URL}/api/events`)
                 if (res.ok) {
                     const data = await res.json()
                     // Filter only approved events for public view

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { API_URL } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -68,7 +69,7 @@ export default function UserDashboard() {
                     return
                 }
 
-                const res = await fetch('http://localhost:5000/api/registrations/my', {
+                const res = await fetch(`${API_URL}/api/registrations/my`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { API_URL } from "@/lib/api"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -39,7 +40,7 @@ export default function MyEventsPage() {
                     return
                 }
 
-                const res = await fetch('http://localhost:5000/api/events/my-events', {
+                const res = await fetch(`${API_URL}/api/events/my-events`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { API_URL } from "@/lib/api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -29,12 +30,12 @@ export default function AdminApprovalsPage() {
 
             // Fetch all events and filter client side for now, or use query param if supported
             // Assuming API returns all events, we filter for pending
-            const res = await fetch('http://localhost:5000/api/events', {
+            const res = await fetch(`${API_URL}/api/events`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             
             // Fetch stats
-            const statsRes = await fetch('http://localhost:5000/api/admin/analytics', {
+            const statsRes = await fetch(`${API_URL}/api/admin/analytics`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
 
@@ -66,7 +67,7 @@ export default function AdminApprovalsPage() {
         setProcessing(eventId)
         try {
             const token = localStorage.getItem('token')
-            const res = await fetch(`http://localhost:5000/api/events/${eventId}`, {
+            const res = await fetch(`${API_URL}/api/events/${eventId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

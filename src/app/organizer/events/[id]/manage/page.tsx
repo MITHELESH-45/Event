@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { API_URL } from "@/lib/api"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -68,7 +69,7 @@ export default function ManageEventPage() {
 
     const fetchEventDetails = async (token: string) => {
         try {
-            const res = await fetch(`http://localhost:5000/api/events/${eventId}`, {
+            const res = await fetch(`${API_URL}/api/events/${eventId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             if (!res.ok) throw new Error('Failed to fetch event')
@@ -81,7 +82,7 @@ export default function ManageEventPage() {
 
     const fetchRegistrations = async (token: string) => {
         try {
-            const res = await fetch(`http://localhost:5000/api/registrations/event/${eventId}`, {
+            const res = await fetch(`${API_URL}/api/registrations/event/${eventId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             if (!res.ok) throw new Error('Failed to fetch registrations')
@@ -125,7 +126,7 @@ export default function ManageEventPage() {
                 body.certificate = false
             }
 
-            const res = await fetch(`http://localhost:5000/api/registrations/${regId}`, {
+            const res = await fetch(`${API_URL}/api/registrations/${regId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

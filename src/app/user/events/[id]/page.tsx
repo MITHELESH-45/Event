@@ -1,6 +1,7 @@
 "use client"
 
 import { useParams, useRouter } from "next/navigation"
+import { API_URL } from "@/lib/api"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,7 +26,7 @@ export default function UserEventDetailsPage() {
         const fetchEventAndRegistration = async () => {
             try {
                 // Fetch event details
-                const res = await fetch(`http://localhost:5000/api/events/${eventId}`)
+                const res = await fetch(`${API_URL}/api/events/${eventId}`)
                 if (!res.ok) throw new Error("Failed to fetch event details")
                 const data = await res.json()
                 setEvent(data)
@@ -33,7 +34,7 @@ export default function UserEventDetailsPage() {
                 // Check registration status (if logged in)
                 const token = localStorage.getItem("token")
                 if (token) {
-                    const regRes = await fetch(`http://localhost:5000/api/registrations/my`, {
+                    const regRes = await fetch(`${API_URL}/api/registrations/my`, {
                         headers: { Authorization: `Bearer ${token}` }
                     })
                     if (regRes.ok) {
@@ -62,7 +63,7 @@ export default function UserEventDetailsPage() {
 
         setRegistering(true)
         try {
-            const res = await fetch(`http://localhost:5000/api/registrations`, {
+            const res = await fetch(`${API_URL}/api/registrations`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -84,7 +85,7 @@ export default function UserEventDetailsPage() {
             })
             
             // Refresh event to update count
-            const eventRes = await fetch(`http://localhost:5000/api/events/${eventId}`)
+            const eventRes = await fetch(`${API_URL}/api/events/${eventId}`)
             if (eventRes.ok) {
                 const eventData = await eventRes.json()
                 setEvent(eventData)

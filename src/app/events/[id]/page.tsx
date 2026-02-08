@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { API_URL } from "@/lib/api"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { PublicLayout } from "@/components/layout/PublicLayout"
@@ -24,7 +25,7 @@ export default function EventDetailsPage() {
     useEffect(() => {
         const fetchEvent = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/api/events/${eventId}`)
+                const res = await fetch(`${API_URL}/api/events/${eventId}`)
                 if (res.ok) {
                     const data = await res.json()
                     setEvent(data)
@@ -41,7 +42,7 @@ export default function EventDetailsPage() {
     useEffect(() => {
         const token = localStorage.getItem("token")
         if (!token || !event) return
-        fetch("http://localhost:5000/api/registrations/my", {
+        fetch(`${API_URL}/api/registrations/my`, {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then((r) => r.ok ? r.json() : [])
@@ -60,7 +61,7 @@ export default function EventDetailsPage() {
         }
         setRegistering(true)
         try {
-            const res = await fetch("http://localhost:5000/api/registrations", {
+            const res = await fetch(`${API_URL}/api/registrations`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

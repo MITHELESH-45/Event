@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { API_URL } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -45,7 +46,7 @@ export default function CertificatesPage() {
                     return
                 }
 
-                const res = await fetch('http://localhost:5000/api/registrations/my', {
+                const res = await fetch(`${API_URL}/api/registrations/my`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

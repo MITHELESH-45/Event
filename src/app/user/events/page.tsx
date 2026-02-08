@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { API_URL } from "@/lib/api"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -40,7 +41,7 @@ export default function AvailableEventsPage() {
 
     const fetchEvents = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/events')
+            const res = await fetch(`${API_URL}/api/events`)
             if (!res.ok) throw new Error('Failed to fetch events')
             const data = await res.json()
             setEvents(data)
@@ -69,7 +70,7 @@ export default function AvailableEventsPage() {
 
         setRegistering(eventId)
         try {
-            const res = await fetch('http://localhost:5000/api/registrations', {
+            const res = await fetch(`${API_URL}/api/registrations`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
