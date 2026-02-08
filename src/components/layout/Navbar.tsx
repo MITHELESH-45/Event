@@ -19,7 +19,7 @@ export function Navbar() {
             <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
                 <div className="container flex h-16 items-center justify-between">
                     <Link href="/" className="flex items-center space-x-2">
-                        <Image src="/logo.png" alt="EventEdge Logo" width={32} height={32} />
+                        <Image src="/logo.jpeg" alt="EventEdge Logo" width={32} height={32} />
                         <span className="text-xl font-bold bg-gradient-to-r from-primary via-yellow-500 to-red-500 bg-clip-text text-transparent">
                             EventEdge
                         </span>
@@ -49,7 +49,7 @@ export function Navbar() {
         <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-16 items-center justify-between">
                 <Link href="/" className="flex items-center space-x-2">
-                    <Image src="/logo.png" alt="EventEdge Logo" width={32} height={32} />
+                    <Image src="/logo.jpeg" alt="EventEdge Logo" width={32} height={32} />
                     <span className="text-xl font-bold bg-gradient-to-r from-primary via-yellow-500 to-red-500 bg-clip-text text-transparent">
                         EventEdge
                     </span>
