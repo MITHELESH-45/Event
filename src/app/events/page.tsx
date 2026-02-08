@@ -7,7 +7,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, Users } from "lucide-react"
+import { Calendar, MapPin, Users, Eye } from "lucide-react"
 import { format } from "date-fns"
 
 export default function EventsPage() {
@@ -101,8 +101,13 @@ export default function EventsPage() {
                                         />
                                     </div>
                                 </CardContent>
-                                <CardFooter className="p-4 border-t bg-card/50">
-                                    <Link href={`/events/${event._id}`} className="w-full">
+                                <CardFooter className="p-4 border-t bg-card/50 flex gap-2">
+                                    <Button variant="outline" size="icon" asChild title="View">
+                                        <Link href={`/events/${event._id}`}>
+                                            <Eye className="h-4 w-4" />
+                                        </Link>
+                                    </Button>
+                                    <Link href={`/events/${event._id}`} className="flex-1">
                                         <Button className="w-full" variant={(event.registered || 0) >= event.capacity ? "secondary" : "default"}>
                                             {(event.registered || 0) >= event.capacity ? "Waitlist" : "View Details"}
                                         </Button>

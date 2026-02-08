@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { API_URL } from "@/lib/api"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Award, Download, Loader2 } from "lucide-react"
+import { Award, Download, Loader2, Eye } from "lucide-react"
 import { generateCertificate } from "@/lib/certificate"
 import { format } from "date-fns"
 import { useToast } from "@/components/ui/use-toast"
@@ -167,19 +168,31 @@ export default function CertificatesPage() {
                                         <span className="text-muted-foreground">Status:</span>
                                         <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Verified</Badge>
                                     </div>
-                                    <Button
-                                        className="w-full mt-2"
-                                        variant="outline"
-                                        onClick={() => handleDownload(reg)}
-                                        disabled={generating === reg._id}
-                                    >
-                                        {generating === reg._id ? (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Download className="mr-2 h-4 w-4" />
-                                        )}
-                                        Download PDF
-                                    </Button>
+                                    <div className="flex gap-2 mt-2">
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            asChild
+                                            title="View event"
+                                        >
+                                            <Link href={`/user/events/${reg.event?._id}`}>
+                                                <Eye className="h-4 w-4" />
+                                            </Link>
+                                        </Button>
+                                        <Button
+                                            className="flex-1"
+                                            variant="outline"
+                                            onClick={() => handleDownload(reg)}
+                                            disabled={generating === reg._id}
+                                        >
+                                            {generating === reg._id ? (
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Download className="mr-2 h-4 w-4" />
+                                            )}
+                                            Download PDF
+                                        </Button>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>

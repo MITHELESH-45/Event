@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Calendar, MapPin, Users, Search, Clock, ArrowRight, Loader2 } from "lucide-react"
+import { Calendar, MapPin, Users, Search, Clock, Eye, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 const categories = ["All", "Technology", "Business", "Workshop", "Health", "Art"]
@@ -60,15 +60,19 @@ export default function AvailableEventsPage() {
         return matchesSearch && matchesCategory
     })
 
-    const handleRegister = async (eventId: string) => {
+    const handleRegister = async (ev: Event) => {
         const token = localStorage.getItem('token')
         if (!token) {
             toast.error("Please login to register")
             router.push('/auth/login')
             return
         }
+        if (ev.registered >= ev.capacity) {
+            toast.error("This event is full. No more registrations can be accepted.")
+            return
+        }
 
-        setRegistering(eventId)
+        setRegistering(ev._id)
         try {
             const res = await fetch(`${API_URL}/api/registrations`, {
                 method: 'POST',
@@ -76,7 +80,7 @@ export default function AvailableEventsPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ eventId })
+                body: JSON.stringify({ eventId: ev._id })
             })
 
             const data = await res.json()
@@ -196,14 +200,14 @@ export default function AvailableEventsPage() {
                         <CardFooter className="pt-2 flex gap-2">
                             <Button
                                 className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                                disabled={event.registered >= event.capacity || registering === event._id}
-                                onClick={() => handleRegister(event._id)}
+                                disabled={registering === event._id}
+                                onClick={() => handleRegister(event)}
                             >
-                                {registering === event._id ? "Registering..." : event.registered >= event.capacity ? "Full" : "Register Now"}
+                                {registering === event._id ? "Registering..." : "Register Now"}
                             </Button>
-                            <Button variant="outline" size="icon" asChild>
+                            <Button variant="outline" size="icon" asChild title="View details">
                                 <Link href={`/user/events/${event._id}`}>
-                                    <ArrowRight className="h-4 w-4" />
+                                    <Eye className="h-4 w-4" />
                                 </Link>
                             </Button>
                         </CardFooter>

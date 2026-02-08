@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Users, FileClock, CheckCircle, XCircle, Loader2, Trash2 } from "lucide-react"
+import { Calendar, Users, FileClock, CheckCircle, XCircle, Loader2, Trash2, Eye } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { toast } from "sonner"
@@ -167,16 +168,23 @@ export default function AdminDashboard() {
                                                 {event.status}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className="text-right space-x-2">
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon" 
-                                                className="text-destructive hover:text-destructive/90"
-                                                onClick={() => handleDelete(event._id)}
-                                                disabled={deleting === event._id}
-                                            >
-                                                {deleting === event._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                                            </Button>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-1">
+                                                <Button variant="ghost" size="icon" asChild title="View">
+                                                    <Link href={`/events/${event._id}`}>
+                                                        <Eye className="h-4 w-4" />
+                                                    </Link>
+                                                </Button>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="text-destructive hover:text-destructive/90"
+                                                    onClick={() => handleDelete(event._id)}
+                                                    disabled={deleting === event._id}
+                                                >
+                                                    {deleting === event._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))

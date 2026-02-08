@@ -9,9 +9,12 @@ export async function generateCertificate(userName: string, eventName: string, d
         const pdfDoc = await PDFDocument.create()
         const page = pdfDoc.addPage([800, 600]) // Landscape
 
-        // Try to load and embed template image (optional)
+        // Use certificate template from public/certificate-template.png
         try {
-            const templateResponse = await fetch('/certificate-template.png')
+            const templateUrl = typeof window !== 'undefined'
+                ? `${window.location.origin}/certificate-template.png`
+                : '/certificate-template.png'
+            const templateResponse = await fetch(templateUrl)
             if (templateResponse.ok) {
                 const existingPdfBytes = await templateResponse.arrayBuffer()
                 const templateImage = await pdfDoc.embedPng(existingPdfBytes)

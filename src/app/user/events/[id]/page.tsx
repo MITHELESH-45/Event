@@ -60,6 +60,14 @@ export default function UserEventDetailsPage() {
             router.push("/auth/login")
             return
         }
+        if ((event?.registered ?? 0) >= (event?.capacity ?? 0)) {
+            toast({
+                variant: "destructive",
+                title: "Event full",
+                description: "This event has reached its capacity. You cannot register at this time.",
+            })
+            return
+        }
 
         setRegistering(true)
         try {
@@ -210,10 +218,10 @@ export default function UserEventDetailsPage() {
                                 <Button
                                     className="w-full"
                                     size="lg"
-                                    disabled={registering || (event.registered || 0) >= event.capacity}
+                                    disabled={registering}
                                     onClick={handleRegister}
                                 >
-                                    {registering ? "Registering..." : (event.registered || 0) >= event.capacity ? "Event Full" : "Register for Event"}
+                                    {registering ? "Registering..." : "Register for Event"}
                                 </Button>
                             )}
                         </CardContent>

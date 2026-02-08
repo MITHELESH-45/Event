@@ -59,6 +59,11 @@ export default function EventDetailsPage() {
             router.push(`/auth/login?role=user`)
             return
         }
+        const isFull = (event?.registered ?? 0) >= (event?.capacity ?? 0)
+        if (isFull) {
+            toast({ variant: "destructive", title: "Event full", description: "This event has reached its capacity. You cannot register at this time." })
+            return
+        }
         setRegistering(true)
         try {
             const res = await fetch(`${API_URL}/api/registrations`, {
@@ -165,9 +170,9 @@ export default function EventDetailsPage() {
                             <Button
                                 className="w-full h-12 text-lg font-semibold shadow-lg shadow-primary/20"
                                 onClick={handleRegister}
-                                disabled={isRegistered || registering || (event.registered || 0) >= event.capacity}
+                                disabled={isRegistered || registering}
                             >
-                                {registering ? "Registering..." : isRegistered ? "You are Registered" : (event.registered || 0) >= event.capacity ? "Join Waitlist" : "Register Now"}
+                                {registering ? "Registering..." : isRegistered ? "You are Registered" : "Register Now"}
                             </Button>
                             <p className="text-xs text-center text-muted-foreground">
                                 By registering, you agree to the event terms.

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { API_URL } from "@/lib/api"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -19,6 +19,7 @@ interface Event {
     time: string
     location: string
     capacity: number
+    registered?: number
     status: string
     category: string
     registrations?: any[]
@@ -31,36 +32,46 @@ export default function MyEventsPage() {
     const [events, setEvents] = useState<Event[]>([])
     const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        const fetchEvents = async () => {
-            try {
-                const token = localStorage.getItem('token')
-                if (!token) {
-                    router.push('/auth/login?role=organizer')
-                    return
-                }
-
-                const res = await fetch(`${API_URL}/api/events/my-events`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                })
-
-                if (res.ok) {
-                    const data = await res.json()
-                    setEvents(data)
-                } else {
-                    console.error("Failed to fetch events")
-                }
-            } catch (error) {
-                console.error("Error fetching events:", error)
-            } finally {
-                setLoading(false)
+    const fetchEvents = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('token')
+            if (!token) {
+                router.push('/auth/login?role=organizer')
+                return
             }
-        }
 
-        fetchEvents()
+            const res = await fetch(`${API_URL}/api/events/my-events`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+
+            if (res.ok) {
+                const data = await res.json()
+                setEvents(data)
+            } else {
+                console.error("Failed to fetch events")
+            }
+        } catch (error) {
+            console.error("Error fetching events:", error)
+        } finally {
+            setLoading(false)
+        }
     }, [router])
+
+    useEffect(() => {
+        fetchEvents()
+    }, [fetchEvents])
+
+    // Refetch when user returns to the tab so participant counts stay up to date
+    useEffect(() => {
+        const onFocus = () => {
+            const token = localStorage.getItem('token')
+            if (token) fetchEvents()
+        }
+        window.addEventListener('focus', onFocus)
+        return () => window.removeEventListener('focus', onFocus)
+    }, [fetchEvents])
 
     const filteredEvents = events.filter(event => {
         const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -89,7 +100,7 @@ export default function MyEventsPage() {
         approved: events.filter(e => e.status.toUpperCase() === "APPROVED").length,
         pending: events.filter(e => e.status.toUpperCase() === "PENDING").length,
         completed: events.filter(e => e.status.toUpperCase() === "COMPLETED").length,
-        totalRegistrations: events.reduce((sum, e) => sum + (e.registrations?.length || 0), 0),
+        totalRegistrations: events.reduce((sum, e) => sum + (e.registered ?? 0), 0),
         totalAttended: 0 // This would need to be calculated from registration attendance data
     }
 
@@ -207,7 +218,7 @@ export default function MyEventsPage() {
                                     </TableCell>
                                     <TableCell>{getStatusBadge(event.status)}</TableCell>
                                     <TableCell className="text-center">
-                                        <span className="font-medium">{event.registrations?.length || 0}</span>
+                                        <span className="font-medium">{event.registered ?? 0}</span>
                                         <span className="text-muted-foreground">/{event.capacity}</span>
                                     </TableCell>
                                     <TableCell className="text-center">
