@@ -4,6 +4,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { usePathname, useSearchParams } from "next/navigation"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Menu } from "lucide-react"
 
 export function Navbar() {
     const pathname = usePathname()
@@ -77,18 +79,43 @@ export function Navbar() {
                     </Link>
                 </div>
 
-                {/* Mobile Auth Buttons */}
-                <div className="md:hidden flex items-center space-x-2">
-                    <Link href="/auth/role-selection?mode=login">
-                        <Button variant="ghost" size="sm">
-                            Log in
-                        </Button>
-                    </Link>
-                    <Link href="/auth/role-selection?mode=register">
-                        <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
-                            Get Started
-                        </Button>
-                    </Link>
+                {/* Mobile Navigation Trigger */}
+                <div className="md:hidden flex items-center">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <Menu className="h-6 w-6" />
+                                <span className="sr-only">Toggle menu</span>
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="right" className="w-[80vw] sm:w-[350px]">
+                            <div className="flex flex-col gap-6 mt-6">
+                                <Link href="/" className="flex items-center space-x-2">
+                                    <span className="text-xl font-bold">EventEdge</span>
+                                </Link>
+                                <nav className="flex flex-col gap-4">
+                                    <Link href="/events" className="text-lg font-medium transition-colors hover:text-primary">
+                                        Events
+                                    </Link>
+                                    <Link href="/how-it-works" className="text-lg font-medium transition-colors hover:text-primary">
+                                        How it Works
+                                    </Link>
+                                </nav>
+                                <div className="flex flex-col gap-2 mt-4">
+                                    <Link href="/auth/role-selection?mode=login">
+                                        <Button variant="outline" className="w-full justify-start">
+                                            Log in
+                                        </Button>
+                                    </Link>
+                                    <Link href="/auth/role-selection?mode=register">
+                                        <Button className="w-full justify-start bg-primary text-primary-foreground">
+                                            Get Started
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </div>
+                        </SheetContent>
+                    </Sheet>
                 </div>
             </div>
         </header>

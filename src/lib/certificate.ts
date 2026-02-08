@@ -20,36 +20,72 @@ export async function generateCertificate(userName: string, eventName: string, d
             height: 600,
         })
 
-        // Embed font
-        const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+        // Embed fonts
+        const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
         const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica)
 
-        // Draw Participant Name (Centered)
-        const fontSizeName = 40
+        // Draw "Certificate of Participation" header
+        const headerText = "CERTIFICATE OF PARTICIPATION"
+        const headerSize = 20
+        const headerWidth = fontBold.widthOfTextAtSize(headerText, headerSize)
+        page.drawText(headerText, {
+            x: 400 - headerWidth / 2,
+            y: 450,
+            size: headerSize,
+            font: fontBold,
+            color: rgb(0.15, 0.15, 0.15),
+        })
+
+        // Draw "This is to certify that" text
+        const certifyText = "This is to certify that"
+        const certifySize = 16
+        const certifyWidth = fontRegular.widthOfTextAtSize(certifyText, certifySize)
+        page.drawText(certifyText, {
+            x: 400 - certifyWidth / 2,
+            y: 390,
+            size: certifySize,
+            font: fontRegular,
+            color: rgb(0.3, 0.3, 0.3),
+        })
+
+        // Draw Participant Name (Centered and Bold)
+        const fontSizeName = 36
         const textName = userName
-        const textWidthName = font.widthOfTextAtSize(textName, fontSizeName)
+        const textWidthName = fontBold.widthOfTextAtSize(textName, fontSizeName)
         page.drawText(textName, {
             x: 400 - textWidthName / 2, // Center
-            y: 320,
+            y: 340,
             size: fontSizeName,
-            font: font,
+            font: fontBold,
             color: rgb(0.1, 0.1, 0.1),
         })
 
-        // Draw Event Name
-        const fontSizeEvent = 24
+        // Draw "has successfully participated in" text
+        const participatedText = "has successfully participated in"
+        const participatedSize = 16
+        const participatedWidth = fontRegular.widthOfTextAtSize(participatedText, participatedSize)
+        page.drawText(participatedText, {
+            x: 400 - participatedWidth / 2,
+            y: 290,
+            size: participatedSize,
+            font: fontRegular,
+            color: rgb(0.3, 0.3, 0.3),
+        })
+
+        // Draw Event Name (Bold)
+        const fontSizeEvent = 28
         const textEvent = eventName
-        const textWidthEvent = fontRegular.widthOfTextAtSize(textEvent, fontSizeEvent)
+        const textWidthEvent = fontBold.widthOfTextAtSize(textEvent, fontSizeEvent)
         page.drawText(textEvent, {
             x: 400 - textWidthEvent / 2,
-            y: 250,
+            y: 240,
             size: fontSizeEvent,
-            font: fontRegular,
-            color: rgb(0.2, 0.2, 0.2),
+            font: fontBold,
+            color: rgb(0.15, 0.15, 0.15),
         })
 
         // Draw Date
-        const fontSizeDate = 18
+        const fontSizeDate = 16
         const textDate = `Date: ${date}`
         const textWidthDate = fontRegular.widthOfTextAtSize(textDate, fontSizeDate)
         page.drawText(textDate, {

@@ -22,8 +22,15 @@ app.use('/api/auth', (req, res, next) => {
     next();
 }, authRoutes);
 app.use('/api/events', eventRoutes);
+import path from 'path';
+import uploadRoutes from './routes/uploadRoutes';
+
 app.use('/api/registrations', registrationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/upload', uploadRoutes);
+
+// make uploads folder static
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 const PORT = process.env.PORT || 5000;
 console.log('PORT from env:', process.env.PORT);

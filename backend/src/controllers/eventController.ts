@@ -8,7 +8,7 @@ import Registration from '../models/Registration';
 export const getEvents = async (req: Request, res: Response) => {
     try {
         const events = await Event.find().populate('organizer', 'name email').lean();
-        
+
         // Add registration counts
         const eventsWithCounts = await Promise.all(events.map(async (event: any) => {
             const count = await Registration.countDocuments({ event: event._id, status: { $ne: 'cancelled' } });
@@ -27,7 +27,7 @@ export const getEvents = async (req: Request, res: Response) => {
 export const getMyEvents = async (req: any, res: Response) => {
     try {
         const events = await Event.find({ organizer: req.user.id }).lean();
-        
+
         // Add registration counts
         const eventsWithCounts = await Promise.all(events.map(async (event: any) => {
             const count = await Registration.countDocuments({ event: event._id, status: { $ne: 'cancelled' } });
@@ -49,9 +49,9 @@ export const getEvent = async (req: Request, res: Response) => {
         if (!event) {
             return res.status(404).json({ message: 'Event not found' });
         }
-        
+
         const count = await Registration.countDocuments({ event: req.params.id, status: { $ne: 'cancelled' } });
-        
+
         res.status(200).json({ ...event, registered: count });
     } catch (error: any) {
         res.status(500).json({ message: error.message });
@@ -63,8 +63,9 @@ export const getEvent = async (req: Request, res: Response) => {
 // @access  Private (Organizer/Admin)
 export const createEvent = async (req: any, res: Response) => {
     try {
+        console.log('Create Event Body:', req.body);
         if (!req.body.title || !req.body.date || !req.body.location) {
-             return res.status(400).json({ message: 'Please provide title, date and location' });
+            return res.status(400).json({ message: 'Please provide title, date and location' });
         }
 
         const event = await Event.create({
@@ -73,6 +74,7 @@ export const createEvent = async (req: any, res: Response) => {
         });
         res.status(201).json(event);
     } catch (error: any) {
+        console.error('Create Event Error:', error);
         res.status(400).json({ message: error.message });
     }
 };

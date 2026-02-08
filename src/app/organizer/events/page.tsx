@@ -1,90 +1,75 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Calendar, Users, Search, Plus, Settings, Eye, BarChart3, CheckCircle, Clock, XCircle } from "lucide-react"
+import { Calendar, Users, Search, Plus, Settings, Eye, BarChart3, CheckCircle, Clock, XCircle, Loader2 } from "lucide-react"
+import { format } from "date-fns"
 
-// Mock data for organizer's events
-const mockEvents = [
-    {
-        id: "1",
-        title: "AI & Machine Learning Summit 2026",
-        date: "2026-02-15",
-        time: "09:00 AM",
-        location: "Tech Hub Convention Center",
-        capacity: 500,
-        registered: 342,
-        attended: 0,
-        status: "APPROVED",
-        certificatesIssued: 0
-    },
-    {
-        id: "2",
-        title: "Web Development Bootcamp",
-        date: "2026-01-20",
-        time: "10:00 AM",
-        location: "Digital Learning Center",
-        capacity: 50,
-        registered: 48,
-        attended: 45,
-        status: "COMPLETED",
-        certificatesIssued: 45
-    },
-    {
-        id: "3",
-        title: "Startup Pitch Competition",
-        date: "2026-01-15",
-        time: "02:00 PM",
-        location: "Innovation Campus",
-        capacity: 200,
-        registered: 180,
-        attended: 165,
-        status: "COMPLETED",
-        certificatesIssued: 150
-    },
-    {
-        id: "4",
-        title: "Cloud Computing Conference",
-        date: "2026-03-10",
-        time: "09:00 AM",
-        location: "Cloud Arena",
-        capacity: 300,
-        registered: 156,
-        attended: 0,
-        status: "PENDING",
-        certificatesIssued: 0
-    },
-    {
-        id: "5",
-        title: "Design Thinking Workshop",
-        date: "2026-03-15",
-        time: "11:00 AM",
-        location: "Creative Studio",
-        capacity: 40,
-        registered: 28,
-        attended: 0,
-        status: "APPROVED",
-        certificatesIssued: 0
-    }
-]
+interface Event {
+    _id: string
+    title: string
+    date: string
+    time: string
+    location: string
+    capacity: number
+    status: string
+    category: string
+    registrations?: any[]
+}
 
 export default function MyEventsPage() {
+    const router = useRouter()
     const [searchTerm, setSearchTerm] = useState("")
     const [statusFilter, setStatusFilter] = useState("ALL")
+    const [events, setEvents] = useState<Event[]>([])
+    const [loading, setLoading] = useState(true)
 
-    const filteredEvents = mockEvents.filter(event => {
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                const token = localStorage.getItem('token')
+                if (!token) {
+                    router.push('/auth/login?role=organizer')
+                    return
+                }
+
+                const res = await fetch('http://localhost:5000/api/events/my-events', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+
+                if (res.ok) {
+                    const data = await res.json()
+                    setEvents(data)
+                } else {
+                    console.error("Failed to fetch events")
+                }
+            } catch (error) {
+                console.error("Error fetching events:", error)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchEvents()
+    }, [router])
+
+    const filteredEvents = events.filter(event => {
         const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase())
-        const matchesStatus = statusFilter === "ALL" || event.status === statusFilter
+        const matchesStatus = statusFilter === "ALL" || event.status.toUpperCase() === statusFilter
         return matchesSearch && matchesStatus
     })
 
     const getStatusBadge = (status: string) => {
-        switch (status) {
+        const upperStatus = status.toUpperCase()
+        switch (upperStatus) {
             case "APPROVED":
                 return <Badge className="bg-primary/20 text-primary border-primary/30">Approved</Badge>
             case "PENDING":
@@ -99,12 +84,20 @@ export default function MyEventsPage() {
     }
 
     const stats = {
-        total: mockEvents.length,
-        approved: mockEvents.filter(e => e.status === "APPROVED").length,
-        pending: mockEvents.filter(e => e.status === "PENDING").length,
-        completed: mockEvents.filter(e => e.status === "COMPLETED").length,
-        totalRegistrations: mockEvents.reduce((sum, e) => sum + e.registered, 0),
-        totalAttended: mockEvents.reduce((sum, e) => sum + e.attended, 0)
+        total: events.length,
+        approved: events.filter(e => e.status.toUpperCase() === "APPROVED").length,
+        pending: events.filter(e => e.status.toUpperCase() === "PENDING").length,
+        completed: events.filter(e => e.status.toUpperCase() === "COMPLETED").length,
+        totalRegistrations: events.reduce((sum, e) => sum + (e.registrations?.length || 0), 0),
+        totalAttended: 0 // This would need to be calculated from registration attendance data
+    }
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-[50vh]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        )
     }
 
     return (
@@ -198,7 +191,7 @@ export default function MyEventsPage() {
                         </TableHeader>
                         <TableBody>
                             {filteredEvents.map(event => (
-                                <TableRow key={event.id}>
+                                <TableRow key={event._id}>
                                     <TableCell>
                                         <div>
                                             <div className="font-medium">{event.title}</div>
@@ -207,38 +200,34 @@ export default function MyEventsPage() {
                                     </TableCell>
                                     <TableCell>
                                         <div className="text-sm">
-                                            <div>{event.date}</div>
+                                            <div>{event.date ? format(new Date(event.date), 'yyyy-MM-dd') : 'N/A'}</div>
                                             <div className="text-muted-foreground">{event.time}</div>
                                         </div>
                                     </TableCell>
                                     <TableCell>{getStatusBadge(event.status)}</TableCell>
                                     <TableCell className="text-center">
-                                        <span className="font-medium">{event.registered}</span>
+                                        <span className="font-medium">{event.registrations?.length || 0}</span>
                                         <span className="text-muted-foreground">/{event.capacity}</span>
                                     </TableCell>
                                     <TableCell className="text-center">
-                                        {event.status === "COMPLETED" ? (
-                                            <span className="font-medium text-primary">{event.attended}</span>
+                                        {event.status.toUpperCase() === "COMPLETED" ? (
+                                            <span className="font-medium text-primary">-</span>
                                         ) : (
                                             <span className="text-muted-foreground">-</span>
                                         )}
                                     </TableCell>
                                     <TableCell className="text-center">
-                                        {event.certificatesIssued > 0 ? (
-                                            <span className="font-medium text-primary">{event.certificatesIssued}</span>
-                                        ) : (
-                                            <span className="text-muted-foreground">-</span>
-                                        )}
+                                        <span className="text-muted-foreground">-</span>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
                                             <Button variant="ghost" size="icon" asChild>
-                                                <Link href={`/organizer/events/${event.id}`}>
+                                                <Link href={`/organizer/events/${event._id}`}>
                                                     <Eye className="h-4 w-4" />
                                                 </Link>
                                             </Button>
                                             <Button variant="ghost" size="icon" asChild>
-                                                <Link href={`/organizer/events/${event.id}/manage`}>
+                                                <Link href={`/organizer/events/${event._id}/manage`}>
                                                     <Settings className="h-4 w-4" />
                                                 </Link>
                                             </Button>
