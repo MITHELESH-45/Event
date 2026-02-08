@@ -28,32 +28,28 @@ export default function LoginPage() {
         e.preventDefault()
         setLoading(true)
 
-        fetch("/api/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password, role }),
-        })
-            .then(async (res) => {
-                if (!res.ok) throw new Error("Failed")
-                return res.json()
+        try {
+            const res = await fetch("http://localhost:5000/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password, role }),
             })
-            .then((data) => {
-                if (data?.user) {
-                    try {
-                        localStorage.setItem("currentUser", JSON.stringify(data.user))
-                    } catch { }
-                }
-                if (data?.token) {
-                    localStorage.setItem("token", data.token)
-                }
-                setLoading(false)
-                if (role === "admin") router.push("/admin/dashboard")
-                else if (role === "organizer") router.push("/organizer/dashboard")
-                else if (role === "user") router.push("/user/dashboard")
-            })
-            .catch(() => {
-                setLoading(false)
-            })
+            const data = await res.json()
+            if (!res.ok) {
+                throw new Error(data.message || "Login failed")
+            }
+            const user = data.user || { id: data._id, name: data.name, email: data.email, role: data.role }
+            const token = data.token
+            if (user) localStorage.setItem("currentUser", JSON.stringify(user))
+            if (token) localStorage.setItem("token", token)
+            if (role === "admin") router.push("/admin/dashboard")
+            else if (role === "organizer") router.push("/organizer/dashboard")
+            else if (role === "user") router.push("/user/dashboard")
+        } catch (err: any) {
+            alert(err.message || "Login failed. Is the backend running on port 5000?")
+        } finally {
+            setLoading(false)
+        }
     }
 
     if (!role) return null

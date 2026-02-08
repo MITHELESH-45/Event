@@ -323,15 +323,16 @@ export default function CreateEventPage() {
                                                     body: formDataUpload
                                                 });
 
+                                                const data = await res.json();
                                                 if (res.ok) {
-                                                    const data = await res.json();
                                                     setFormData(prev => ({ ...prev, imageUrl: data.file }));
+                                                    toast({ title: "Success", description: "Image uploaded successfully!" });
                                                 } else {
-                                                    alert("Failed to upload image");
+                                                    toast({ title: "Upload Failed", description: data.message || "Failed to upload image", variant: "destructive" });
                                                 }
                                             } catch (error) {
                                                 console.error("Upload error:", error);
-                                                alert("Error uploading image");
+                                                toast({ title: "Error", description: "Network error. Is the backend running?", variant: "destructive" });
                                             } finally {
                                                 setLoading(false);
                                             }

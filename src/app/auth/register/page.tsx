@@ -43,22 +43,20 @@ export default function RegisterPage() {
             return
         }
 
-        fetch("/api/auth/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, email, password, role }),
-        })
-            .then(async (res) => {
-                if (!res.ok) throw new Error("Failed")
-                return res.json()
+        try {
+            const res = await fetch("http://localhost:5000/api/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, password, role }),
             })
-            .then(() => {
-                setLoading(false)
-                router.push(`/auth/login?role=${role}`)
-            })
-            .catch(() => {
-                setLoading(false)
-            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.message || "Registration failed")
+            router.push(`/auth/login?role=${role}`)
+        } catch (err: any) {
+            alert(err.message || "Registration failed. Is the backend running on port 5000?")
+        } finally {
+            setLoading(false)
+        }
     }
 
     if (!role || role === 'admin') return null

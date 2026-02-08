@@ -51,7 +51,7 @@ export const registerForEvent = async (req: any, res: Response) => {
 export const getMyRegistrations = async (req: any, res: Response) => {
     try {
         const registrations = await Registration.find({ user: req.user.id })
-            .populate('event')
+            .populate({ path: 'event', populate: { path: 'organizer', select: 'name' } })
             .populate('user', 'name')
             .sort('-createdAt');
         res.status(200).json(registrations);

@@ -55,22 +55,22 @@ export const registerUser = async (req: Request, res: Response) => {
 
 export const loginUser = async (req: Request, res: Response) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, role } = req.body;
 
-        // Check for user email
         const user = await User.findOne({ email });
-
-        if (user && (await bcrypt.compare(password, user.password))) {
-            res.json({
-                _id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                token: generateToken(user.id)
-            });
-        } else {
-            res.status(400).json({ message: 'Invalid credentials' });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(401).json({ message: 'Invalid credentials' });
         }
+
+        // If role provided, verify it matches
+        if (role && user.role !== role) {
+            return res.status(403).json({ message: 'Invalid role for this user' });
+        }
+
+        res.json({
+            user: { id: user._id, name: user.name, email: user.email, role: user.role },
+            token: generateToken(user._id.toString())
+        });
     } catch (error: any) {
         console.error('Error in loginUser:', error);
         res.status(500).json({ message: error.message || 'Internal Server Error' });

@@ -116,8 +116,10 @@ export default function ManageEventPage() {
             const token = localStorage.getItem('token')
             if (!token) return
 
-            const body: any = { status }
-            if (status === 'attended') {
+            // Backend uses 'confirmed' for absent (not 'absent') - only 'attended', 'confirmed', 'cancelled', 'pending' are valid
+            const backendStatus = status === 'attended' ? 'attended' : 'confirmed'
+            const body: any = { status: backendStatus }
+            if (backendStatus === 'attended') {
                 body.certificate = true
             } else {
                 body.certificate = false
@@ -134,9 +136,9 @@ export default function ManageEventPage() {
 
             if (!res.ok) throw new Error('Failed to update status')
             
-            // Optimistic update
+            // Optimistic update - use backendStatus for UI
             setRegistrations(prev => prev.map(r => 
-                r._id === regId ? { ...r, status: status, certificate: status === 'attended' } : r
+                r._id === regId ? { ...r, status: backendStatus, certificate: backendStatus === 'attended' } : r
             ))
             toast({
                 title: "Success",
@@ -157,8 +159,9 @@ export default function ManageEventPage() {
         switch (status) {
             case "attended":
                 return <Badge className="bg-primary/20 text-primary border-primary/30">Attended</Badge>
-            case "absent":
-                return <Badge variant="destructive">Absent</Badge>
+            case "confirmed":
+            case "pending":
+                return <Badge variant="outline">Not Attended</Badge>
             default:
                 return <Badge variant="outline">Pending</Badge>
         }
@@ -363,7 +366,7 @@ export default function ManageEventPage() {
                                                         <CheckCircle className="h-4 w-4 mr-1" /> Present
                                                     </Button>
                                                     <Button
-                                                        variant={reg.status === "absent" ? "destructive" : "outline"}
+                                                        variant="outline"
                                                         size="sm"
                                                         disabled={actionLoading === reg._id}
                                                         onClick={() => markAttendance(reg._id, "absent")}

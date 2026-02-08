@@ -1,26 +1,46 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 
+/**
+ * Generates a PDF certificate with participant name, event name, and date.
+ * Uses template image if available, otherwise creates a clean PDF from scratch.
+ */
 export async function generateCertificate(userName: string, eventName: string, date: string) {
     try {
-        const existingPdfBytes = await fetch('/certificate-template.png').then(res => res.arrayBuffer())
-
-        // Create a new PDF document
         const pdfDoc = await PDFDocument.create()
         const page = pdfDoc.addPage([800, 600]) // Landscape
 
-        // Embed the template image
-        const templateImage = await pdfDoc.embedPng(existingPdfBytes)
-        const { width, height } = templateImage.scale(1)
+        // Try to load and embed template image (optional)
+        try {
+            const templateResponse = await fetch('/certificate-template.png')
+            if (templateResponse.ok) {
+                const existingPdfBytes = await templateResponse.arrayBuffer()
+                const templateImage = await pdfDoc.embedPng(existingPdfBytes)
+                page.drawImage(templateImage, {
+                    x: 0,
+                    y: 0,
+                    width: 800,
+                    height: 600,
+                })
+            }
+        } catch {
+            // Fallback: draw a subtle background
+            page.drawRectangle({
+                x: 0,
+                y: 0,
+                width: 800,
+                height: 600,
+                color: rgb(0.98, 0.98, 0.98),
+            })
+            page.drawRectangle({
+                x: 30,
+                y: 30,
+                width: 740,
+                height: 540,
+                borderColor: rgb(0.2, 0.2, 0.2),
+                borderWidth: 2,
+            })
+        }
 
-        // Draw the image to fit the page
-        page.drawImage(templateImage, {
-            x: 0,
-            y: 0,
-            width: 800,
-            height: 600,
-        })
-
-        // Embed fonts
         const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
         const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica)
 
@@ -50,10 +70,10 @@ export async function generateCertificate(userName: string, eventName: string, d
 
         // Draw Participant Name (Centered and Bold)
         const fontSizeName = 36
-        const textName = userName
+        const textName = userName || "Participant"
         const textWidthName = fontBold.widthOfTextAtSize(textName, fontSizeName)
         page.drawText(textName, {
-            x: 400 - textWidthName / 2, // Center
+            x: 400 - textWidthName / 2,
             y: 340,
             size: fontSizeName,
             font: fontBold,
@@ -74,7 +94,7 @@ export async function generateCertificate(userName: string, eventName: string, d
 
         // Draw Event Name (Bold)
         const fontSizeEvent = 28
-        const textEvent = eventName
+        const textEvent = eventName || "Event"
         const textWidthEvent = fontBold.widthOfTextAtSize(textEvent, fontSizeEvent)
         page.drawText(textEvent, {
             x: 400 - textWidthEvent / 2,
@@ -96,7 +116,6 @@ export async function generateCertificate(userName: string, eventName: string, d
             color: rgb(0.3, 0.3, 0.3),
         })
 
-        // Serialize the PDFDocument to bytes (a Uint8Array)
         const pdfBytes = await pdfDoc.save()
         return pdfBytes
     } catch (error) {

@@ -1,13 +1,18 @@
+// Load backend/.env - use multiple paths for ts-node vs compiled
+import path from 'path';
+import dotenv from 'dotenv';
+[path.join(process.cwd(), '.env'), path.resolve(__dirname, '../.env')].forEach((p) => {
+    dotenv.config({ path: p });
+});
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import connectDB from './config/db';
 import authRoutes from './routes/authRoutes';
 import eventRoutes from './routes/eventRoutes';
 import registrationRoutes from './routes/registrationRoutes';
 import adminRoutes from './routes/adminRoutes';
-
-dotenv.config({ override: true });
+import uploadRoutes from './routes/uploadRoutes';
 
 connectDB();
 
@@ -22,9 +27,6 @@ app.use('/api/auth', (req, res, next) => {
     next();
 }, authRoutes);
 app.use('/api/events', eventRoutes);
-import path from 'path';
-import uploadRoutes from './routes/uploadRoutes';
-
 app.use('/api/registrations', registrationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
@@ -33,7 +35,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 const PORT = process.env.PORT || 5000;
-console.log('PORT from env:', process.env.PORT);
+console.log('PORT:', PORT, process.env.PORT ? '(from .env)' : '(default)');
 
 app.get('/', (req, res) => {
     res.send('API is running...');
