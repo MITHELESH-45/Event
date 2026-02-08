@@ -63,6 +63,7 @@ export default function ManageEventPage() {
             }
         }
         loadData()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [eventId])
 
     const fetchEventDetails = async (token: string) => {

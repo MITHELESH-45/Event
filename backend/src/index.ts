@@ -5,6 +5,7 @@ import connectDB from './config/db';
 import authRoutes from './routes/authRoutes';
 import eventRoutes from './routes/eventRoutes';
 import registrationRoutes from './routes/registrationRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 dotenv.config({ override: true });
 
@@ -22,6 +23,7 @@ app.use('/api/auth', (req, res, next) => {
 }, authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
+app.use('/api/admin', adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 console.log('PORT from env:', process.env.PORT);

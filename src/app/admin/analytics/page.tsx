@@ -1,45 +1,63 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Calendar, TrendingUp, Award, BarChart3, PieChart, Activity, ArrowUp, ArrowDown } from "lucide-react"
-
-// Mock analytics data
-const stats = {
-    totalUsers: 2547,
-    totalOrganizers: 156,
-    totalEvents: 89,
-    totalRegistrations: 12458,
-    certificatesIssued: 8934,
-    activeEvents: 12,
-    pendingApprovals: 8,
-    monthlyGrowth: 23.5
-}
-
-const monthlyData = [
-    { month: "Aug", events: 5, registrations: 450 },
-    { month: "Sep", events: 8, registrations: 720 },
-    { month: "Oct", events: 12, registrations: 1100 },
-    { month: "Nov", events: 15, registrations: 1450 },
-    { month: "Dec", events: 18, registrations: 1890 },
-    { month: "Jan", events: 22, registrations: 2340 }
-]
-
-const topEvents = [
-    { title: "AI & Machine Learning Summit 2026", registrations: 342, capacity: 500 },
-    { title: "Web Development Bootcamp", registrations: 48, capacity: 50 },
-    { title: "Cloud Computing Conference", registrations: 156, capacity: 300 },
-    { title: "Startup Pitch Competition", registrations: 180, capacity: 200 },
-    { title: "Design Thinking Workshop", registrations: 28, capacity: 40 }
-]
-
-const categoryDistribution = [
-    { category: "Technology", count: 35, percentage: 39 },
-    { category: "Business", count: 22, percentage: 25 },
-    { category: "Workshop", count: 18, percentage: 20 },
-    { category: "Networking", count: 14, percentage: 16 }
-]
+import { Users, Calendar, TrendingUp, Award, BarChart3, PieChart, Activity, ArrowUp, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 export default function AdminAnalyticsPage() {
+    const [data, setData] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const token = localStorage.getItem('token')
+                if (!token) return
+
+                const res = await fetch('http://localhost:5000/api/admin/analytics', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+
+                if (res.ok) {
+                    const result = await res.json()
+                    setData(result)
+                } else {
+                    toast.error("Failed to fetch analytics")
+                }
+            } catch (error) {
+                console.error("Failed to fetch analytics", error)
+                toast.error("Failed to load analytics")
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchData()
+    }, [])
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-full min-h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        )
+    }
+
+    const stats = data?.stats || {
+        totalUsers: 0,
+        totalOrganizers: 0,
+        totalEvents: 0,
+        totalRegistrations: 0,
+        certificatesIssued: 0,
+        activeEvents: 0,
+        pendingApprovals: 0
+    }
+
+    const monthlyData = data?.monthlyEvents || []
+    const topEvents = data?.topEvents || []
+    const categoryDistribution = data?.categoryDistribution || []
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -57,10 +75,6 @@ export default function AdminAnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground flex items-center mt-1">
-                            <ArrowUp className="h-3 w-3 text-primary mr-1" />
-                            <span className="text-primary">+12%</span> from last month
-                        </p>
                     </CardContent>
                 </Card>
                 <Card className="bg-card/50 border-border/50">
@@ -70,10 +84,6 @@ export default function AdminAnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.totalEvents}</div>
-                        <p className="text-xs text-muted-foreground flex items-center mt-1">
-                            <ArrowUp className="h-3 w-3 text-primary mr-1" />
-                            <span className="text-primary">+8</span> new this month
-                        </p>
                     </CardContent>
                 </Card>
                 <Card className="bg-card/50 border-border/50">
@@ -83,10 +93,6 @@ export default function AdminAnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.totalRegistrations.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground flex items-center mt-1">
-                            <ArrowUp className="h-3 w-3 text-primary mr-1" />
-                            <span className="text-primary">+{stats.monthlyGrowth}%</span> growth
-                        </p>
                     </CardContent>
                 </Card>
                 <Card className="bg-card/50 border-border/50">
@@ -97,7 +103,9 @@ export default function AdminAnalyticsPage() {
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.certificatesIssued.toLocaleString()}</div>
                         <p className="text-xs text-muted-foreground mt-1">
-                            {((stats.certificatesIssued / stats.totalRegistrations) * 100).toFixed(1)}% completion rate
+                            {stats.totalRegistrations > 0 
+                                ? ((stats.certificatesIssued / stats.totalRegistrations) * 100).toFixed(1) 
+                                : 0}% completion rate
                         </p>
                     </CardContent>
                 </Card>
@@ -112,42 +120,29 @@ export default function AdminAnalyticsPage() {
                             <BarChart3 className="h-5 w-5" />
                             Monthly Trends
                         </CardTitle>
-                        <CardDescription>Events and registrations over time</CardDescription>
+                        <CardDescription>Events over time</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {monthlyData.map((data, index) => (
-                                <div key={data.month} className="flex items-center gap-4">
-                                    <div className="w-12 text-sm text-muted-foreground">{data.month}</div>
-                                    <div className="flex-1 space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <div
-                                                className="h-2 bg-primary rounded-full transition-all"
-                                                style={{ width: `${(data.registrations / 2500) * 100}%` }}
-                                            />
-                                            <span className="text-xs text-muted-foreground">{data.registrations}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div
-                                                className="h-2 bg-red-600 rounded-full transition-all"
-                                                style={{ width: `${(data.events / 25) * 100}%` }}
-                                            />
-                                            <span className="text-xs text-muted-foreground">{data.events} events</span>
+                        {monthlyData.length > 0 ? (
+                            <div className="space-y-4">
+                                {monthlyData.map((data: any) => (
+                                    <div key={data._id} className="flex items-center gap-4">
+                                        <div className="w-12 text-sm text-muted-foreground">Month {data._id}</div>
+                                        <div className="flex-1 space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <div
+                                                    className="h-2 bg-red-600 rounded-full transition-all"
+                                                    style={{ width: `${(data.count / 20) * 100}%` }}
+                                                />
+                                                <span className="text-xs text-muted-foreground">{data.count} events</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="flex gap-4 mt-4 text-xs">
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-primary rounded" />
-                                <span>Registrations</span>
+                                ))}
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-red-600 rounded" />
-                                <span>Events</span>
-                            </div>
-                        </div>
+                        ) : (
+                            <div className="text-center py-8 text-muted-foreground">No data available</div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -161,25 +156,33 @@ export default function AdminAnalyticsPage() {
                         <CardDescription>Distribution by category</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {categoryDistribution.map((cat, index) => {
-                                const colors = ["bg-primary", "bg-red-600", "bg-yellow-500", "bg-red-800"]
-                                return (
-                                    <div key={cat.category} className="space-y-2">
-                                        <div className="flex justify-between text-sm">
-                                            <span>{cat.category}</span>
-                                            <span className="text-muted-foreground">{cat.count} events ({cat.percentage}%)</span>
+                        {categoryDistribution.length > 0 ? (
+                            <div className="space-y-4">
+                                {categoryDistribution.map((cat: any, index: number) => {
+                                    const colors = ["bg-primary", "bg-red-600", "bg-yellow-500", "bg-red-800", "bg-blue-500"]
+                                    // Calculate percentage if not provided by backend or just show count
+                                    // Assuming backend provides count, let's just show relative bar
+                                    const percentage = (cat.count / stats.totalEvents) * 100
+                                    
+                                    return (
+                                        <div key={cat._id} className="space-y-2">
+                                            <div className="flex justify-between text-sm">
+                                                <span>{cat._id}</span>
+                                                <span className="text-muted-foreground">{cat.count} events ({percentage.toFixed(0)}%)</span>
+                                            </div>
+                                            <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full ${colors[index % colors.length]} rounded-full transition-all`}
+                                                    style={{ width: `${percentage}%` }}
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full ${colors[index]} rounded-full transition-all`}
-                                                style={{ width: `${cat.percentage}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-muted-foreground">No data available</div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
@@ -194,29 +197,33 @@ export default function AdminAnalyticsPage() {
                     <CardDescription>Events with highest registrations</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="space-y-4">
-                        {topEvents.map((event, index) => (
-                            <div key={event.title} className="flex items-center gap-4">
-                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">
-                                    {index + 1}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="font-medium truncate">{event.title}</div>
-                                    <div className="text-sm text-muted-foreground">
-                                        {event.registrations}/{event.capacity} registered ({((event.registrations / event.capacity) * 100).toFixed(0)}%)
+                    {topEvents.length > 0 ? (
+                        <div className="space-y-4">
+                            {topEvents.map((event: any, index: number) => (
+                                <div key={event._id} className="flex items-center gap-4">
+                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">
+                                        {index + 1}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-medium truncate">{event.title}</div>
+                                        <div className="text-sm text-muted-foreground">
+                                            {event.registered}/{event.capacity} registered ({event.capacity > 0 ? ((event.registered / event.capacity) * 100).toFixed(0) : 0}%)
+                                        </div>
+                                    </div>
+                                    <div className="w-32">
+                                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-primary rounded-full"
+                                                style={{ width: `${event.capacity > 0 ? (event.registered / event.capacity) * 100 : 0}%` }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="w-32">
-                                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-primary rounded-full"
-                                            style={{ width: `${(event.registrations / event.capacity) * 100}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 text-muted-foreground">No data available</div>
+                    )}
                 </CardContent>
             </Card>
 

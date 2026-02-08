@@ -1,6 +1,10 @@
-import mongoose from 'mongoose';
-
-const eventSchema = new mongoose.Schema({
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = __importDefault(require("mongoose"));
+const eventSchema = new mongoose_1.default.Schema({
     title: {
         type: String,
         required: [true, 'Please add a title'],
@@ -28,7 +32,7 @@ const eventSchema = new mongoose.Schema({
         min: 1
     },
     organizer: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: mongoose_1.default.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
@@ -42,11 +46,10 @@ const eventSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'approved', 'rejected', 'draft', 'cancelled', 'completed'],
-        default: 'pending'
+        enum: ['draft', 'published', 'cancelled', 'completed'],
+        default: 'published'
     }
 }, {
     timestamps: true
 });
-
-export default mongoose.model('Event', eventSchema);
+exports.default = mongoose_1.default.model('Event', eventSchema);

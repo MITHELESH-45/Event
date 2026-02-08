@@ -1,0 +1,36 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = __importDefault(require("mongoose"));
+const registrationSchema = new mongoose_1.default.Schema({
+    user: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    event: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: 'Event',
+        required: true
+    },
+    status: {
+        type: String,
+        enum: ['confirmed', 'cancelled', 'attended', 'pending'],
+        default: 'confirmed'
+    },
+    feedback: {
+        rating: Number,
+        comment: String
+    },
+    certificate: {
+        type: Boolean,
+        default: false
+    }
+}, {
+    timestamps: true
+});
+// Prevent double registration
+registrationSchema.index({ user: 1, event: 1 }, { unique: true });
+exports.default = mongoose_1.default.model('Registration', registrationSchema);

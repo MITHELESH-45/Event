@@ -182,7 +182,7 @@ export default function MyRegistrationsPage() {
             <Card className="bg-card/50 border-border/50">
                 <CardHeader>
                     <CardTitle>Past Events</CardTitle>
-                    <CardDescription>Events you've attended or missed</CardDescription>
+                    <CardDescription>Events you&apos;ve attended or missed</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {pastRegistrations.length > 0 ? (
