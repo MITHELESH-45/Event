@@ -18,11 +18,23 @@ connectDB();
 
 const app = express();
 
+// CORS: allow frontend origin(s). Set FRONTEND_URL on Render (e.g. https://event-gbrj.vercel.app or comma-separated list).
+const allowedOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',').map((o) => o.trim()).filter(Boolean)
+    : [];
 app.use(cors({
-    origin: process.env.FRONTEND_URL 
-        ? process.env.FRONTEND_URL.split(',') 
-        : true, // Allow all in dev. In prod: FRONTEND_URL=https://your-app.vercel.app
-    credentials: true
+    origin: allowedOrigins.length > 0
+        ? (origin, cb) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                cb(null, origin || true);
+            } else {
+                cb(null, false);
+            }
+        }
+        : true, // allow all when FRONTEND_URL not set (e.g. local dev)
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

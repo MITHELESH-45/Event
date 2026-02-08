@@ -49,13 +49,15 @@ Your app has two parts:
 
 ---
 
-## Step 3: Backend CORS
+## Step 3: Backend CORS (required for Vercel → backend requests)
 
-On your backend host (Railway/Render), add:
+On your backend host (Railway/Render), add **exactly** your Vercel app URL (no trailing slash):
 
 ```
-FRONTEND_URL=https://your-app.vercel.app
+FRONTEND_URL=https://event-gbrj.vercel.app
 ```
+
+If this is missing or wrong, the browser will block requests with "CORS policy: No 'Access-Control-Allow-Origin' header".
 
 Replace with your actual Vercel URL. For multiple origins, use comma-separated:
 
