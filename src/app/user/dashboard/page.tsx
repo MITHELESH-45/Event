@@ -11,24 +11,51 @@ import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 
 import { generateCertificate } from "@/lib/certificate"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function UserDashboard() {
     const router = useRouter()
+    const { toast } = useToast()
     const [registrations, setRegistrations] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+    const [downloading, setDownloading] = useState<string | null>(null)
 
-    const handleDownloadCertificate = async (userName: string, eventName: string, date: string) => {
+    const handleDownloadCertificate = async (regId: string, userName: string, eventName: string, date: string) => {
+        setDownloading(regId)
         try {
-            const pdfBytes = await generateCertificate(userName, eventName, date)
+            const formattedDate = format(new Date(date), 'MMMM dd, yyyy')
+            const pdfBytes = await generateCertificate(userName, eventName, formattedDate)
+
             if (pdfBytes) {
                 const blob = new Blob([pdfBytes as any], { type: "application/pdf" })
                 const link = document.createElement("a")
                 link.href = window.URL.createObjectURL(blob)
-                link.download = `Certificate-${eventName}.pdf`
+                link.download = `${eventName.replace(/\s+/g, '_')}_Certificate.pdf`
+                document.body.appendChild(link)
                 link.click()
+                document.body.removeChild(link)
+                window.URL.revokeObjectURL(link.href)
+
+                toast({
+                    title: "Success",
+                    description: "Certificate downloaded successfully!"
+                })
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Failed to generate certificate"
+                })
             }
         } catch (error) {
             console.error("Certificate download failed", error)
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to download certificate"
+            })
+        } finally {
+            setDownloading(null)
         }
     }
 
@@ -134,16 +161,22 @@ export default function UserDashboard() {
                                             {reg.status === 'attended' && (
                                                 <>
                                                     <FeedbackDialog eventTitle={reg.event?.title} />
-                                                    <Button 
-                                                        variant="outline" 
+                                                    <Button
+                                                        variant="outline"
                                                         size="sm"
                                                         onClick={() => handleDownloadCertificate(
+                                                            reg._id,
                                                             reg.user?.name || "Participant",
                                                             reg.event?.title || "Event",
-                                                            reg.event?.date ? format(new Date(reg.event.date), 'yyyy-MM-dd') : 'Date'
+                                                            reg.event?.date || new Date().toISOString()
                                                         )}
+                                                        disabled={downloading === reg._id}
                                                     >
-                                                        <Download className="h-4 w-4 mr-2" />
+                                                        {downloading === reg._id ? (
+                                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                        ) : (
+                                                            <Download className="h-4 w-4 mr-2" />
+                                                        )}
                                                         Certificate
                                                     </Button>
                                                 </>

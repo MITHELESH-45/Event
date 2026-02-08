@@ -27,7 +27,7 @@ const steps = [
 
 export default function CreateEventPage() {
     const router = useRouter()
-    // const { toast } = useToast() // Toast hook needs provider, assuming Toaster is added in layout
+    const { toast } = useToast()
     const [currentStep, setCurrentStep] = useState(1)
     const [loading, setLoading] = useState(false)
 
@@ -43,6 +43,7 @@ export default function CreateEventPage() {
         capacity: 100,
         certificateEnabled: true,
         certificateTitle: "Certificate of Participation",
+        imageUrl: "",
     })
 
     // Basic handlers
@@ -51,14 +52,39 @@ export default function CreateEventPage() {
 
     const handleSubmit = async () => {
         setLoading(true)
-        
+
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                alert("You are not logged in");
+                toast({ title: "Error", description: "You are not logged in", variant: "destructive" });
                 router.push("/auth/login?role=organizer");
                 return;
             }
+
+            if (!formData.title || !formData.location || !formData.startDate) {
+                toast({ title: "Validation Error", description: "Please fill in all required fields: Title, Location, and Date.", variant: "destructive" });
+                setLoading(false);
+                return;
+            }
+
+            if (formData.capacity < 1) {
+                toast({ title: "Validation Error", description: "Capacity must be at least 1", variant: "destructive" });
+                setLoading(false);
+                return;
+            }
+
+            const payload = {
+                title: formData.title,
+                description: formData.description,
+                date: formData.startDate,
+                time: `${formData.startTime} - ${formData.endTime}`,
+                location: formData.location,
+                capacity: formData.capacity,
+                category: formData.type,
+                status: 'pending',
+                imageUrl: formData.imageUrl
+            };
+            console.log('Events payload:', payload);
 
             const res = await fetch('http://localhost:5000/api/events', {
                 method: 'POST',
@@ -66,28 +92,20 @@ export default function CreateEventPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    title: formData.title,
-                    description: formData.description,
-                    date: formData.startDate,
-                    time: `${formData.startTime} - ${formData.endTime}`,
-                    location: formData.location,
-                    capacity: formData.capacity,
-                    category: formData.type,
-                    status: 'published'
-                })
+                body: JSON.stringify(payload)
             });
 
             if (res.ok) {
-                 alert("Event created successfully!");
-                 router.push("/organizer/dashboard");
+                toast({ title: "Success", description: "Event created successfully!" });
+                router.push("/organizer/dashboard");
             } else {
-                 const data = await res.json();
-                 alert(data.message || "Failed to create event");
+                const data = await res.json();
+                console.error("Server Error:", data.message); // Log for user to see
+                toast({ title: "Error", description: data.message || "Failed to create event", variant: "destructive" });
             }
         } catch (error) {
-            console.error(error);
-            alert("Error creating event");
+            console.error("Submission Error:", error);
+            toast({ title: "Error", description: "An unexpected error occurred.", variant: "destructive" });
         } finally {
             setLoading(false)
         }
@@ -259,8 +277,11 @@ export default function CreateEventPage() {
                                     <Input
                                         type="number"
                                         className="text-2xl h-16 w-32 text-center"
-                                        value={formData.capacity}
-                                        onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
+                                        value={formData.capacity || ''}
+                                        onChange={(e) => {
+                                            const val = e.target.value === '' ? 0 : parseInt(e.target.value);
+                                            setFormData({ ...formData, capacity: isNaN(val) ? 0 : val })
+                                        }}
                                     />
                                     <p className="text-muted-foreground text-sm">
                                         Attendees. Once this limit is reached, registration will automatically close.
@@ -279,11 +300,51 @@ export default function CreateEventPage() {
                                     <Label className="text-base">Event Banner</Label>
                                     <p className="text-sm text-muted-foreground">Upload a cover image for your event page.</p>
                                 </div>
-                                <div className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-md hover:bg-muted/50 transition cursor-pointer">
-                                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                        <Upload className="h-8 w-8" />
-                                        <span>Click to upload image</span>
-                                    </div>
+                                <div
+                                    className="flex items-center justify-center w-full h-48 border-2 border-dashed rounded-md hover:bg-muted/50 transition cursor-pointer relative overflow-hidden"
+                                    onClick={() => document.getElementById('image-upload')?.click()}
+                                >
+                                    <input
+                                        type="file"
+                                        id="image-upload"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+
+                                            const formDataUpload = new FormData();
+                                            formDataUpload.append('image', file);
+
+                                            try {
+                                                setLoading(true);
+                                                const res = await fetch('http://localhost:5000/api/upload', {
+                                                    method: 'POST',
+                                                    body: formDataUpload
+                                                });
+
+                                                if (res.ok) {
+                                                    const data = await res.json();
+                                                    setFormData(prev => ({ ...prev, imageUrl: data.file }));
+                                                } else {
+                                                    alert("Failed to upload image");
+                                                }
+                                            } catch (error) {
+                                                console.error("Upload error:", error);
+                                                alert("Error uploading image");
+                                            } finally {
+                                                setLoading(false);
+                                            }
+                                        }}
+                                    />
+                                    {formData.imageUrl ? (
+                                        <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                            {loading ? <Loader2 className="h-8 w-8 animate-spin" /> : <Upload className="h-8 w-8" />}
+                                            <span>{loading ? "Uploading..." : "Click to upload image"}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

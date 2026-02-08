@@ -22,7 +22,7 @@ export function MobileSidebar({ role }: MobileSidebarProps) {
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0">
-                <Sidebar role={role} className="hidden md:hidden block relative w-full border-none h-full" />
+                <Sidebar role={role} className="block relative w-full border-none h-full" />
             </SheetContent>
         </Sheet>
     )
