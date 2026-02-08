@@ -132,8 +132,18 @@ export default function UserEventDetailsPage() {
             </div>
 
             {/* Event Banner */}
-            <div className="h-48 bg-gradient-to-br from-primary/30 to-secondary/30 rounded-lg flex items-center justify-center">
-                <Calendar className="h-20 w-20 text-primary/50" />
+            <div className="h-48 md:h-64 rounded-lg overflow-hidden relative bg-muted">
+                {event.imageUrl ? (
+                    <img
+                        src={event.imageUrl}
+                        alt={event.title}
+                        className="w-full h-full object-cover"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/30 to-secondary/30">
+                        <Calendar className="h-20 w-20 text-primary/50" />
+                    </div>
+                )}
             </div>
 
             <div className="grid gap-6 lg:grid-cols-3">

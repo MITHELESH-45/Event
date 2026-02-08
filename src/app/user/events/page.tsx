@@ -23,6 +23,7 @@ interface Event {
     registered: number
     category: string
     status: string
+    imageUrl?: string
 }
 
 export default function AvailableEventsPage() {
@@ -149,8 +150,18 @@ export default function AvailableEventsPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredEvents.map(event => (
                     <Card key={event._id} className="bg-card/50 border-border/50 hover:border-primary/30 transition-all duration-300 overflow-hidden group">
-                        <div className="h-40 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                            <Calendar className="h-16 w-16 text-primary/50" />
+                        <div className="h-40 relative bg-muted overflow-hidden">
+                            {event.imageUrl ? (
+                                <img
+                                    src={event.imageUrl}
+                                    alt={event.title}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20">
+                                    <Calendar className="h-16 w-16 text-primary/50" />
+                                </div>
+                            )}
                         </div>
                         <CardHeader className="pb-2">
                             <div className="flex items-start justify-between gap-2">
